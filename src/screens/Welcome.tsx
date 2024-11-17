@@ -19,24 +19,9 @@ type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welc
 
 const pages = [
   {
-    id: 1,
-    text: 'Bienvenida 1: Explora nuestra app',
-    image: 'https://img.freepik.com/vector-gratis/coleccion-objetos-cocina_23-2147637194.jpg',
-  },
-  {
-    id: 2,
-    text: 'Bienvenida 2: Encuentra lo que necesitas',
-    image: 'https://img.freepik.com/vector-gratis/plantilla-pegatina-repartidor-uniforme-cajas_1308-59807.jpg',
-  },
-  {
-    id: 3,
-    text: 'Bienvenida 3: Conéctate con el mundo',
-    image: 'https://img.freepik.com/vector-gratis/ilustracion-representante-ventas-gradiente_23-2149381418.jpg',
-  },
-  {
     id: 4,
-    text: 'Bienvenida 4: ¡Comencemos!',
-    image: 'https://img.freepik.com/vector-gratis/comercio-internacional-diseno-plano-dinero_23-2149146363.jpg',
+    text: 'Tu mejor opción para comprar y vender productos de manera segura',
+    image: require('../../assets/imgs/Inicio.png'), // Cambiado a ruta local
   },
 ];
 
@@ -113,13 +98,22 @@ const Welcome = () => {
         ))}
       </View>
 
-      {/* Imagen central con curva */}
-      <View style={styles.imageContainer}>
-        <Image source={{ uri: pages[currentPage].image }} style={styles.image} resizeMode="cover" />
-      </View>
+      {/* Imagen central */}
+      <Image source={pages[currentPage].image} style={styles.image} resizeMode="contain" />
 
       {/* Texto de bienvenida */}
-      <Text style={[styles.text, { color: textColor }]}>{pages[currentPage].text}</Text>
+      <Text
+  style={[
+    styles.text,
+    {
+      backgroundColor: 'rgba(255, 255, 255, 0.8)', // Fondo blanco semi-transparente
+      padding: 10, // Espaciado interno
+      borderRadius: 10, // Bordes redondeados
+    },
+  ]}
+>
+  {pages[currentPage].text}
+</Text>
 
       {/* Botones dinámicos */}
       {currentPage === pages.length - 1 && (
@@ -171,16 +165,10 @@ const styles = StyleSheet.create({
     zIndex: -1,
     overflow: 'hidden',
   },
-  imageContainer: {
-    width: '100%',
-    height: '50%',
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    overflow: 'hidden',
-  },
   image: {
     width: '100%',
-    height: '100%',
+    height: '50%',
+    marginTop: 20,
   },
   text: {
     fontSize: 24,
