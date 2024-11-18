@@ -17,7 +17,7 @@ const ProductCard = ({
       <Paragraph style={styles.price}>$ {item.price}</Paragraph>
     </Card.Content>
     <Card.Actions>
-      <Button mode="contained" onPress={() => onViewDetails(item)}>
+      <Button mode="contained" onPress={() => onViewDetails(item)} style={styles.button}>
         Ver Detalles
       </Button>
     </Card.Actions>
@@ -27,13 +27,17 @@ const ProductCard = ({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 8,
     elevation: 3,
+    borderRadius: 0,  // Elimina el redondeo de la tarjeta
   },
   price: {
     marginTop: 8,
     fontWeight: 'bold',
     color: '#272C73',
+  },
+  button: {
+    backgroundColor: '#2F37D0',  // Azul para el botón
+    borderRadius: 0,  // Elimina el redondeo del botón
   },
 });
 

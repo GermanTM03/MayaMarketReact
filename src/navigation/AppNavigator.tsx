@@ -36,7 +36,7 @@ const AppNavigator = () => (
 
       <Stack.Screen name="Almacen" component={AlmacenScreen}  />
       <Stack.Screen name="Ayuda" component={AyudaScreen} />
-      <Stack.Screen name="Configuracion" component={ConfiguracionScreen}  />
+      <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Lector" component={LectorScreen}  />
       <Stack.Screen name="MisProductos" component={MisProductosScreen}  />
       <Stack.Screen name="MisQr" component={MisQrScreen}  />

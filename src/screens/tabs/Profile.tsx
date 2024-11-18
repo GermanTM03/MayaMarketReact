@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { List, Button } from 'react-native-paper';
+import { Button, List } from 'react-native-paper'; // Make sure you import Button from react-native-paper
 import UserProfile from '../../../components/usuario/UserProfile';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import EditProfileModal from '../../../components/usuario/EditarProfileModal'; 
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -18,11 +20,12 @@ type RootStackParamList = {
 interface MenuItem {
   label: string;
   icon: string;
-  route: keyof RootStackParamList; // Asegúrate de que la ruta sea válida
+  route: keyof RootStackParamList;
 }
 
 const Profile = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const { bottom } = useSafeAreaInsets();
 
   const user = {
     name: 'Juan Pérez',
@@ -40,10 +43,6 @@ const Profile = () => {
     { label: 'Configuración', icon: 'cog', route: 'Configuracion' },
   ];
 
-  const handleEdit = () => {
-    console.log('Editar perfil');
-  };
-
   const handleNavigation = (route: keyof RootStackParamList) => {
     navigation.navigate(route);
   };
@@ -53,14 +52,24 @@ const Profile = () => {
     navigation.navigate('Welcome');
   };
 
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleEdit = () => {
+    setModalVisible(true); // Mostrar el modal cuando se presione "Editar perfil"
+  };
+
+  const handleSave = (newName: string, newAvatar: string) => {
+    // Aquí puedes guardar el nombre e imagen editados
+    console.log('Nuevo nombre:', newName);
+    console.log('Nueva imagen:', newAvatar);
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Top Bar Azul con onda manual */}
+    <View style={[styles.container, { paddingBottom: bottom }]}>
       <View style={styles.topBar}>
         <View style={styles.wave} />
       </View>
 
-      {/* Contenido principal */}
       <View style={styles.content}>
         <UserProfile user={user} onEdit={handleEdit} />
         <View style={styles.menuItemsContainer}>
@@ -76,10 +85,21 @@ const Profile = () => {
             ))}
           </List.Section>
         </View>
+
+        {/* Button */}
         <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
           Cerrar sesión
         </Button>
       </View>
+
+      {/* Modal para editar nombre e imagen */}
+      <EditProfileModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={handleSave}
+        currentName={user.name}
+        currentAvatar={user.avatar}
+      />
     </View>
   );
 };

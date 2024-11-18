@@ -80,7 +80,7 @@ const VenderScreen = () => {
         style={styles.input}
       />
 
-      <Button mode="contained" onPress={handleSubmit} style={styles.button}>
+      <Button mode="contained" onPress={handleSubmit} style={styles.submitButton}>
         Agregar Producto
       </Button>
     </View>
@@ -104,6 +104,12 @@ const styles = StyleSheet.create({
   },
   button: {
     marginVertical: 10,
+    borderRadius: 4, // Reducción del redondeo
+  },
+  submitButton: {
+    marginVertical: 10,
+    backgroundColor: '#282948', // Color del fondo del botón
+    borderRadius: 4, // Reducción del redondeo
   },
   avatar: {
     alignSelf: 'center',

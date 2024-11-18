@@ -13,9 +13,7 @@ const TopBar = () => {
           placeholderTextColor="#6e6e6e"
         />
       </View>
-      <TouchableOpacity style={styles.qrButton}>
-        <MaterialIcons name="qr-code-scanner" size={24} color="#FFF" />
-      </TouchableOpacity>
+   
     </View>
   );
 };

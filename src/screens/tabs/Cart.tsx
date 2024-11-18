@@ -11,7 +11,7 @@ interface CartItem {
   name: string;
   price: string;
   quantity: string;
-  image: string; // Asegúrate de incluir la propiedad de imagen
+  image: string;
 }
 
 const Cart = forwardRef((props, ref) => {
@@ -27,7 +27,7 @@ const Cart = forwardRef((props, ref) => {
       const items = storedCart ? JSON.parse(storedCart) : [];
       const updatedItems = items.map((item: CartItem) => ({
         ...item,
-        image: item.image || 'https://via.placeholder.com/150', // Imagen predeterminada
+        image: item.image || 'https://via.placeholder.com/150',
       }));
       setCartItems(updatedItems);
       calculateTotal(updatedItems);
@@ -76,7 +76,7 @@ const Cart = forwardRef((props, ref) => {
     try {
       await AsyncStorage.removeItem('cart');
       setCartItems([]);
-      setTotalAmount(0); // Resetear el total
+      setTotalAmount(0);
     } catch (error) {
       console.error('Error al vaciar el carrito:', error);
     }
@@ -114,10 +114,10 @@ const Cart = forwardRef((props, ref) => {
             />
             <Text style={styles.totalText}>Total General: ${totalAmount.toFixed(2)}</Text>
             <View style={styles.buttonGroup}>
-              <Button mode="contained" onPress={handleClearCart} style={styles.actionButton}>
+              <Button mode="contained" onPress={handleClearCart} style={[styles.actionButton, styles.clearCartButton]}>
                 Vaciar Carrito
               </Button>
-              <Button mode="contained" onPress={handleProceedToPayment} style={styles.actionButton}>
+              <Button mode="contained" onPress={handleProceedToPayment} style={[styles.actionButton, styles.proceedButton]}>
                 Proceder al Pago
               </Button>
             </View>
@@ -173,6 +173,13 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginHorizontal: 5,
+    borderRadius: 4, // Reducir redondeo aquí
+  },
+  clearCartButton: {
+    backgroundColor: '#282948', // Color de fondo del botón "Vaciar Carrito"
+  },
+  proceedButton: {
+    backgroundColor: '#2F37D0', // Color de fondo del botón "Proceder al Pago"
   },
   loadingContainer: {
     flex: 1,

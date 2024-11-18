@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal, Text, TouchableOpacity } from 'react-native';
-import { Card, Title, Paragraph, Button } from 'react-native-paper';
+import { View, StyleSheet, FlatList, Modal, Text, TouchableOpacity, Image } from 'react-native';
+import { Card, Title, Paragraph, Button, IconButton } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 
 interface Product {
@@ -8,14 +8,15 @@ interface Product {
   name: string;
   price: number;
   quantity: number;
+  image: string;
 }
 
 const products: Product[] = [
-  { id: 1, name: 'Producto 1', price: 100, quantity: 10 },
-  { id: 2, name: 'Producto 2', price: 200, quantity: 5 },
-  { id: 3, name: 'Producto 3', price: 150, quantity: 8 },
-  { id: 4, name: 'Producto 4', price: 300, quantity: 2 },
-  { id: 5, name: 'Producto 5', price: 50, quantity: 20 },
+  { id: 1, name: 'Producto 1', price: 100, quantity: 10, image: 'https://via.placeholder.com/150' },
+  { id: 2, name: 'Producto 2', price: 200, quantity: 5, image: 'https://via.placeholder.com/150' },
+  { id: 3, name: 'Producto 3', price: 150, quantity: 8, image: 'https://via.placeholder.com/150' },
+  { id: 4, name: 'Producto 4', price: 300, quantity: 2, image: 'https://via.placeholder.com/150' },
+  { id: 5, name: 'Producto 5', price: 50, quantity: 20, image: 'https://via.placeholder.com/150' },
 ];
 
 const MisQrsScreen = () => {
@@ -30,16 +31,24 @@ const MisQrsScreen = () => {
   const renderProduct = ({ item }: { item: Product }) => (
     <Card style={styles.card}>
       <Card.Content>
-        <Title>{item.name}</Title>
-        <Paragraph>Precio: ${item.price}</Paragraph>
-        <Paragraph>Cantidad: {item.quantity}</Paragraph>
-        <Button
-          mode="contained"
-          onPress={() => handleViewQR(item)}
-          style={styles.viewQrButton}
-        >
-          Ver QR
-        </Button>
+        {/* Contenedor horizontal para imagen y texto */}
+        <View style={styles.productRow}>
+          {/* Imagen del producto */}
+          <Image source={{ uri: item.image }} style={styles.productImage} />
+          {/* Información del producto */}
+          <View style={styles.productInfo}>
+            <Title>{item.name}</Title>
+            <Paragraph>Precio: ${item.price}</Paragraph>
+            <Paragraph>Cantidad: {item.quantity}</Paragraph>
+          </View>
+          {/* Botón con icono de QR */}
+          <IconButton
+            icon="qrcode-scan"
+            size={30}
+            onPress={() => handleViewQR(item)}
+            style={styles.viewQrButton}
+          />
+        </View>
       </Card.Content>
     </Card>
   );
@@ -99,9 +108,23 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 3,
   },
+  // Contenedor de los elementos en fila (imagen + info + QR)
+  productRow: {
+    flexDirection: 'row',
+    alignItems: 'center', // Asegura que los elementos estén alineados verticalmente
+    justifyContent: 'space-between', // Espacia los elementos
+  },
+  productImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 5,
+    marginRight: 16,
+  },
+  productInfo: {
+    flex: 1, // Toma todo el espacio restante
+  },
   viewQrButton: {
-    marginTop: 10,
-    backgroundColor: '#272C73',
+    backgroundColor: 'transparent',
   },
   modalContainer: {
     flex: 1,
