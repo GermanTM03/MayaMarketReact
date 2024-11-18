@@ -1,80 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, Text, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
+import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Card, Title, Paragraph, Button } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
+import { Button } from 'react-native-paper';
+import TopBar from '../../../components/visual/Topbar';
+import CartList from '../../../components/cart/CartList';
+import PaymentModal from '../../../components/cart/PaymentModal';
 
 interface CartItem {
   id: string;
   name: string;
   price: string;
   quantity: string;
+  image: string; // Asegúrate de incluir la propiedad de imagen
 }
 
-const Cart = () => {
+const Cart = forwardRef((props, ref) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true); // Estado de carga
+  const [loading, setLoading] = useState<boolean>(true);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
 
-  // Función para cargar el carrito
   const loadCart = async () => {
-    setLoading(true); // Empezamos por asegurarnos de que el estado de carga esté activado
+    setLoading(true);
     try {
       const storedCart = await AsyncStorage.getItem('cart');
-      if (storedCart) {
-        const parsedCart = JSON.parse(storedCart);
-        setCartItems(parsedCart);
-      } else {
-        setCartItems([]); // Si no hay productos, asegurarse de que el carrito esté vacío
-      }
+      const items = storedCart ? JSON.parse(storedCart) : [];
+      const updatedItems = items.map((item: CartItem) => ({
+        ...item,
+        image: item.image || 'https://via.placeholder.com/150', // Imagen predeterminada
+      }));
+      setCartItems(updatedItems);
+      calculateTotal(updatedItems);
     } catch (error) {
       console.error('Error al cargar el carrito:', error);
-      setCartItems([]); // En caso de error, vaciar el carrito
     } finally {
-      setLoading(false); // Cuando se termina de cargar, cambia el estado a no cargando
+      setLoading(false);
     }
   };
 
-  // useFocusEffect se ejecuta cada vez que la pantalla recibe el enfoque
-  useFocusEffect(
-    React.useCallback(() => {
-      loadCart(); // Cargar el carrito cada vez que la pantalla se enfoque
+  const calculateTotal = (items: CartItem[]) => {
+    const total = items.reduce(
+      (sum, item) => sum + parseFloat(item.price) * parseInt(item.quantity || '1'),
+      0
+    );
+    setTotalAmount(total);
+  };
 
-      const intervalId = setInterval(() => {
-        loadCart(); // Recargar el carrito cada 5 segundos
-      }, 5000); // 5000 milisegundos = 5 segundos
+  useImperativeHandle(ref, () => ({
+    reloadCart: loadCart,
+  }));
 
-      return () => {
-        clearInterval(intervalId); // Limpiar el intervalo cuando el componente se desmonte
-      };
-    }, [])
-  );
+  useEffect(() => {
+    loadCart();
+  }, []);
 
-  const saveCart = async (items: CartItem[]) => {
-    try {
-      await AsyncStorage.setItem('cart', JSON.stringify(items));
-    } catch (error) {
-      console.error('Error al guardar el carrito:', error);
-    }
+  const handleQuantityChange = (id: string, change: number) => {
+    const updatedCart = cartItems.map((item) =>
+      item.id === id
+        ? { ...item, quantity: Math.max(1, parseInt(item.quantity) + change).toString() }
+        : item
+    );
+    setCartItems(updatedCart);
+    calculateTotal(updatedCart);
+    AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
   const handleRemoveItem = (id: string) => {
     const updatedCart = cartItems.filter((item) => item.id !== id);
     setCartItems(updatedCart);
-    saveCart(updatedCart);
-    Alert.alert('Producto eliminado', 'El producto ha sido eliminado del carrito.');
+    calculateTotal(updatedCart);
+    AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
   const handleClearCart = async () => {
     try {
       await AsyncStorage.removeItem('cart');
       setCartItems([]);
-      Alert.alert('Carrito vacío', 'Todos los productos han sido eliminados del carrito.');
+      setTotalAmount(0); // Resetear el total
     } catch (error) {
       console.error('Error al vaciar el carrito:', error);
     }
   };
 
-  // Si está cargando, mostramos un indicador de carga
+  const handleProceedToPayment = () => {
+    setModalVisible(true);
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -85,67 +96,109 @@ const Cart = () => {
   }
 
   return (
-    <View style={styles.container}>
-      {cartItems.length === 0 ? (
-        <Text style={styles.emptyText}>El carrito está vacío. Agrega productos para comenzar.</Text>
-      ) : (
-        <FlatList
-          data={cartItems}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title>{item.name}</Title>
-                <Paragraph>Cantidad: {item.quantity}</Paragraph>
-                <Paragraph>Precio total: ${parseFloat(item.price) * parseInt(item.quantity)}</Paragraph>
-              </Card.Content>
-              <Card.Actions>
-                <Button onPress={() => handleRemoveItem(item.id)}>Eliminar</Button>
-              </Card.Actions>
-            </Card>
-          )}
-        />
-      )}
-      {cartItems.length > 0 && (
-        <Button mode="contained" onPress={handleClearCart} style={styles.clearButton}>
-          Vaciar Carrito
-        </Button>
-      )}
+    <View style={styles.wrapper}>
+      <TopBar />
+      <View style={styles.container}>
+        <Text style={styles.headerText}>Mi Carrito de Compras</Text>
+        {cartItems.length === 0 ? (
+          <View style={styles.emptyCartContainer}>
+            <Text style={styles.emptyCartText}>¡Oh no! No hay productos aún.</Text>
+            <Text style={styles.emptyCartSubText}>Agrega productos para comprar.</Text>
+          </View>
+        ) : (
+          <>
+            <CartList
+              cartItems={cartItems}
+              onQuantityChange={handleQuantityChange}
+              onRemove={handleRemoveItem}
+            />
+            <Text style={styles.totalText}>Total General: ${totalAmount.toFixed(2)}</Text>
+            <View style={styles.buttonGroup}>
+              <Button mode="contained" onPress={handleClearCart} style={styles.actionButton}>
+                Vaciar Carrito
+              </Button>
+              <Button mode="contained" onPress={handleProceedToPayment} style={styles.actionButton}>
+                Proceder al Pago
+              </Button>
+            </View>
+            <PaymentModal
+              visible={modalVisible}
+              totalAmount={totalAmount}
+              onClose={() => setModalVisible(false)}
+              onPayWithPayPal={() => {
+                setModalVisible(false);
+                console.log('Pago con PayPal');
+              }}
+              onPayWithCard={() => {
+                setModalVisible(false);
+                console.log('Pago con Tarjeta');
+              }}
+            />
+          </>
+        )}
+      </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#F5F5F5',
   },
-  card: {
-    marginBottom: 16,
-    borderRadius: 8,
-    elevation: 3,
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
-  emptyText: {
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 18,
-    marginTop: 20,
-    color: '#999',
+    marginBottom: 20,
+    color: '#272C73',
   },
-  clearButton: {
-    backgroundColor: '#E53935',
-    marginTop: 10,
+  totalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#272C73',
+    marginVertical: 10,
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 30,
+  },
+  actionButton: {
+    flex: 1,
+    marginHorizontal: 5,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 18,
     color: '#999',
+  },
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyCartText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#272C73',
+    marginBottom: 10,
+  },
+  emptyCartSubText: {
+    fontSize: 16,
+    color: '#6e6e6e',
+    textAlign: 'center',
   },
 });
 

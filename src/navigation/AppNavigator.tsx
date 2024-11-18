@@ -6,6 +6,14 @@ import Login from '../screens/sesion/Login';
 import Register from '../screens/sesion/Register';
 import BottomTabs from '../../components/visual/ButtomTabs'; // Aquí estará el Bottom Navigation
 
+import AlmacenScreen from '../screens/more/AlmacenScreen';
+import AyudaScreen from '../screens/more//AyudaScreen';
+import ConfiguracionScreen from '../screens/more/ConfiguracionScreen';
+import LectorScreen from '../screens/more/LectorScreen';
+import MisProductosScreen from '../screens/more/MisProductosScreen';
+import MisQrScreen from '../screens/more//MisQrScreen';
+import VenderScreen from '../screens/more/VenderScreen';
+
 const Stack = createStackNavigator();
 
 const AppNavigator = () => (
@@ -24,6 +32,15 @@ const AppNavigator = () => (
     >
       <Stack.Screen name="Welcome" component={Welcome} options={{ headerShown: false }} />
       <Stack.Screen name="Home" component={BottomTabs} options={{ headerShown: false }} />
+
+
+      <Stack.Screen name="Almacen" component={AlmacenScreen}  />
+      <Stack.Screen name="Ayuda" component={AyudaScreen} />
+      <Stack.Screen name="Configuracion" component={ConfiguracionScreen}  />
+      <Stack.Screen name="Lector" component={LectorScreen}  />
+      <Stack.Screen name="MisProductos" component={MisProductosScreen}  />
+      <Stack.Screen name="MisQr" component={MisQrScreen}  />
+      <Stack.Screen name="Vender" component={VenderScreen} />
       
       <Stack.Screen
         name="Login"

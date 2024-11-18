@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { BottomNavigation } from 'react-native-paper';
 import Home from '../../src/screens/Home'; // Asegúrate de que las rutas sean correctas
 import Orders from '../../src/screens/tabs/Orders';
@@ -14,17 +14,30 @@ const BottomTabs = () => {
     { key: 'profile', title: 'Perfil', focusedIcon: 'account', unfocusedIcon: 'account-outline' },
   ]);
 
+  // Usaremos una referencia para llamar a la función de recarga dentro de Cart
+  const cartRef = useRef<any>(null);
+
   const renderScene = BottomNavigation.SceneMap({
     home: Home,
     orders: Orders,
-    cart: Cart,
+    cart: () => <Cart ref={cartRef} />, // Pasamos la referencia al componente Cart
     profile: Profile,
   });
+
+  // Detectamos cuando el índice cambia y es Cart
+  const handleIndexChange = (newIndex: number) => {
+    setIndex(newIndex);
+
+    // Si se selecciona el índice del carrito, llama a la función de recarga
+    if (routes[newIndex].key === 'cart' && cartRef.current) {
+      cartRef.current.reloadCart(); // Llama a la función de recarga
+    }
+  };
 
   return (
     <BottomNavigation
       navigationState={{ index, routes }}
-      onIndexChange={setIndex}
+      onIndexChange={handleIndexChange} // Aquí detectamos el cambio de pestaña
       renderScene={renderScene}
       barStyle={{
         backgroundColor: '#ffffff',
