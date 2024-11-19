@@ -14,13 +14,9 @@
     "@react-navigation/stack": "^7.0.3",
     "expo": "~52.0.7",
     "expo-barcode-scanner": "^13.0.1",
-    "expo-camera": "~16.0.5",
-    "expo-image-picker": "~16.0.2",
-    "expo-permissions": "^14.4.0",
     "expo-status-bar": "~2.0.0",
     "react": "18.3.1",
     "react-native": "0.76.2",
-    "react-native-camera": "^4.2.1",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-get-random-values": "~1.11.0",
     "react-native-image-picker": "^7.1.2",
@@ -33,7 +29,8 @@
     "react-native-screens": "~4.1.0",
     "react-native-svg": "15.8.0",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-webview": "13.12.2"
+    "react-native-webview": "^13.12.4",
+    "expo-image-picker": "~16.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
