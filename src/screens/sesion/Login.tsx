@@ -8,11 +8,13 @@ import {
   ScrollView,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import LoginViewModel from '../../viewmodels/LoginViewModel';
 
 const { width } = Dimensions.get('window');
 
@@ -47,11 +49,21 @@ const Login = () => {
       keyboardDidHideListener.remove();
     };
   }, []);
-
-  const handleLogin = () => {
-    console.log('Login:', { email, password });
-    navigation.navigate('Home'); // Navega a 'Home'
+  const handleLogin = async () => {
+    try {
+      const { name } = await LoginViewModel.login(email, password);
+      Alert.alert('Bienvenido', `Hola, ${name}`);
+      navigation.navigate('Home');
+    } catch (error) {
+      // Verificar que el error sea del tipo esperado
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message); // Usa el mensaje del error
+      } else {
+        Alert.alert('Error', 'Ocurrió un error desconocido.');
+      }
+    }
   };
+  
 
   return (
     <KeyboardAvoidingView

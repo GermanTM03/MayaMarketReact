@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Button, List } from 'react-native-paper'; // Make sure you import Button from react-native-paper
-import UserProfile from '../../../components/usuario/UserProfile';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Alert, ActivityIndicator } from 'react-native';
+import { Button, List } from 'react-native-paper';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import EditProfileModal from '../../../components/usuario/EditarProfileModal'; 
+import UserProfile from '../../../components/usuario/UserProfile';
+import EditProfileModal from '../../../components/usuario/EditarProfileModal';
+import ProfileViewModel, { UserModel } from '../../viewmodels/ProfileViewModel';
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -27,11 +28,9 @@ const Profile = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { bottom } = useSafeAreaInsets();
 
-  const user = {
-    name: 'Juan Pérez',
-    email: 'juan.perez@example.com',
-    avatar: '', // Puedes añadir una URL personalizada si está disponible
-  };
+  const [user, setUser] = useState<UserModel | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const menuItems: MenuItem[] = [
     { label: 'Vender producto', icon: 'cart-plus', route: 'Vender' },
@@ -43,26 +42,57 @@ const Profile = () => {
     { label: 'Configuración', icon: 'cog', route: 'Configuracion' },
   ];
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await ProfileViewModel.getUser();
+        setUser(userData);
+      } catch (error) {
+        Alert.alert('Error', error instanceof Error ? error.message : 'Ocurrió un error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const handleNavigation = (route: keyof RootStackParamList) => {
     navigation.navigate(route);
   };
 
-  const handleLogout = () => {
-    console.log('Cerrar sesión');
-    navigation.navigate('Welcome');
+  const handleLogout = async () => {
+    try {
+      await ProfileViewModel.logout();
+      Alert.alert('Sesión cerrada', 'Has cerrado sesión exitosamente.');
+      navigation.navigate('Welcome');
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Ocurrió un error');
+    }
   };
 
-  const [modalVisible, setModalVisible] = useState(false);
-
   const handleEdit = () => {
-    setModalVisible(true); // Mostrar el modal cuando se presione "Editar perfil"
+    setModalVisible(true);
   };
 
   const handleSave = (newName: string, newAvatar: string) => {
-    // Aquí puedes guardar el nombre e imagen editados
-    console.log('Nuevo nombre:', newName);
-    console.log('Nueva imagen:', newAvatar);
+    if (user) {
+      setUser({
+        ...user,
+        name: newName,
+        image: newAvatar,
+      });
+    }
+    setModalVisible(false);
   };
+
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#272C73" />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingBottom: bottom }]}>
@@ -71,34 +101,39 @@ const Profile = () => {
       </View>
 
       <View style={styles.content}>
-        <UserProfile user={user} onEdit={handleEdit} />
-        <View style={styles.menuItemsContainer}>
-          <List.Section>
-            {menuItems.map((item) => (
-              <List.Item
-                key={item.label}
-                title={item.label}
-                left={(props) => <List.Icon {...props} icon={item.icon} />}
-                onPress={() => handleNavigation(item.route)}
-                style={styles.menuItem}
-              />
-            ))}
-          </List.Section>
-        </View>
+        <UserProfile
+          user={{
+            name: user?.name || 'Usuario desconocido',
+            lastname: user?.lastname || 'Usuario desconocido',
+            email: user?.email || 'Correo no disponible',
+            avatar: user?.image,
+          }}
+          onEdit={handleEdit}
+        />
 
-        {/* Button */}
+        <List.Section>
+          {menuItems.map((item) => (
+            <List.Item
+              key={item.label}
+              title={item.label}
+              left={(props) => <List.Icon {...props} icon={item.icon} />}
+              onPress={() => handleNavigation(item.route)}
+              style={styles.menuItem}
+            />
+          ))}
+        </List.Section>
+
         <Button mode="contained" onPress={handleLogout} style={styles.logoutButton}>
           Cerrar sesión
         </Button>
       </View>
 
-      {/* Modal para editar nombre e imagen */}
       <EditProfileModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
-        currentName={user.name}
-        currentAvatar={user.avatar}
+        currentName={user?.name || ''}
+        currentAvatar={user?.image || ''}
       />
     </View>
   );
@@ -131,10 +166,6 @@ const styles = StyleSheet.create({
     marginTop: -190,
     paddingHorizontal: 16,
   },
-  menuItemsContainer: {
-    marginTop: 20,
-    paddingBottom: 60,
-  },
   menuItem: {
     backgroundColor: '#FFF',
     marginVertical: 4,
@@ -145,6 +176,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
     backgroundColor: '#E53935',
     borderRadius: 8,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

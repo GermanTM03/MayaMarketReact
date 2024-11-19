@@ -2,10 +2,11 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Avatar, IconButton, Text } from 'react-native-paper';
 
-// Define la interfaz para los props
+// Define la interfaz para las propiedades del componente
 interface UserProfileProps {
   user: {
     name: string;
+    lastname: string;
     email: string;
     avatar?: string;
   };
@@ -20,7 +21,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onEdit }) => {
         source={{ uri: user.avatar || 'https://via.placeholder.com/150' }}
       />
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>{user.name}</Text>
+        <Text style={styles.userName}>{user.name} {user.lastname}</Text>
         <Text style={styles.userEmail}>{user.email}</Text>
       </View>
       <IconButton
