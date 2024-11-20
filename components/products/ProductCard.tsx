@@ -1,20 +1,21 @@
 import React from 'react';
 import { Card, Title, Paragraph, Button } from 'react-native-paper';
 import { StyleSheet } from 'react-native';
+import { Product } from '../../models/Product';
 
 const ProductCard = ({
   item,
   onViewDetails,
 }: {
-  item: { id: string; name: string; description: string; price: string; images: string[] };
-  onViewDetails: (product: any) => void;
+  item: Product;
+  onViewDetails: (product: Product) => void;
 }) => (
   <Card style={styles.card}>
-    <Card.Cover source={{ uri: item.images[0] }} />
+    <Card.Cover source={{ uri: item.image_1 }} />
     <Card.Content>
       <Title>{item.name}</Title>
-      <Paragraph>{item.description}</Paragraph>
-      <Paragraph style={styles.price}>$ {item.price}</Paragraph>
+      <Paragraph>Stock: {item.stock}</Paragraph>
+      <Paragraph style={styles.price}>$ {item.price.toFixed(2)}</Paragraph>
     </Card.Content>
     <Card.Actions>
       <Button mode="contained" onPress={() => onViewDetails(item)} style={styles.button}>
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     elevation: 3,
-    borderRadius: 0,  // Elimina el redondeo de la tarjeta
+    borderRadius: 8,
   },
   price: {
     marginTop: 8,
@@ -36,8 +37,8 @@ const styles = StyleSheet.create({
     color: '#272C73',
   },
   button: {
-    backgroundColor: '#2F37D0',  // Azul para el botón
-    borderRadius: 0,  // Elimina el redondeo del botón
+    backgroundColor: '#2F37D0',
+    borderRadius: 4,
   },
 });
 
