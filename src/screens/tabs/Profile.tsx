@@ -80,6 +80,7 @@ const Profile = () => {
       setUser({
         ...user,
         name: newName,
+        lastname: user.lastname,
         image: newAvatar,
       });
     }

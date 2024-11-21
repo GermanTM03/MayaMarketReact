@@ -1,90 +1,18 @@
-import React, { useState, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { forwardRef, useImperativeHandle } from 'react';
+import { View, StyleSheet, Text, ActivityIndicator, FlatList, Image } from 'react-native';
 import { Button } from 'react-native-paper';
-import TopBar from '../../../components/visual/Topbar';
-import CartList from '../../../components/cart/CartList';
-import PaymentModal from '../../../components/cart/PaymentModal';
+import { useCartViewModel } from '../../viewmodels/CartViewModel';
 
-interface CartItem {
-  id: string;
-  name: string;
-  price: string;
-  quantity: string;
-  image: string;
-}
+const Cart = forwardRef((_, ref) => {
+  const { cart, loading, error, loadCart, removeItem, changeItemQuantity } = useCartViewModel();
 
-const Cart = forwardRef((props, ref) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [totalAmount, setTotalAmount] = useState<number>(0);
-
-  const loadCart = async () => {
-    setLoading(true);
-    try {
-      const storedCart = await AsyncStorage.getItem('cart');
-      const items = storedCart ? JSON.parse(storedCart) : [];
-      const updatedItems = items.map((item: CartItem) => ({
-        ...item,
-        image: item.image || 'https://via.placeholder.com/150',
-      }));
-      setCartItems(updatedItems);
-      calculateTotal(updatedItems);
-    } catch (error) {
-      console.error('Error al cargar el carrito:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateTotal = (items: CartItem[]) => {
-    const total = items.reduce(
-      (sum, item) => sum + parseFloat(item.price) * parseInt(item.quantity || '1'),
-      0
-    );
-    setTotalAmount(total);
-  };
-
+  // Usa `useImperativeHandle` para exponer funciones al componente padre
   useImperativeHandle(ref, () => ({
-    reloadCart: loadCart,
+    reloadCart: () => {
+      console.log('Recargando carrito...');
+      loadCart();
+    },
   }));
-
-  useEffect(() => {
-    loadCart();
-  }, []);
-
-  const handleQuantityChange = (id: string, change: number) => {
-    const updatedCart = cartItems.map((item) =>
-      item.id === id
-        ? { ...item, quantity: Math.max(1, parseInt(item.quantity) + change).toString() }
-        : item
-    );
-    setCartItems(updatedCart);
-    calculateTotal(updatedCart);
-    AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-  };
-
-  const handleRemoveItem = (id: string) => {
-    const updatedCart = cartItems.filter((item) => item.id !== id);
-    setCartItems(updatedCart);
-    calculateTotal(updatedCart);
-    AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-  };
-
-  const handleClearCart = async () => {
-    try {
-      await AsyncStorage.removeItem('cart');
-      setCartItems([]);
-      setTotalAmount(0);
-    } catch (error) {
-      console.error('Error al vaciar el carrito:', error);
-    }
-  };
-
-  const handleProceedToPayment = () => {
-    setModalVisible(true);
-  };
 
   if (loading) {
     return (
@@ -95,91 +23,101 @@ const Cart = forwardRef((props, ref) => {
     );
   }
 
-  return (
-    <View style={styles.wrapper}>
-      <TopBar />
-      <View style={styles.container}>
-        <Text style={styles.headerText}>Mi Carrito de Compras</Text>
-        {cartItems.length === 0 ? (
-          <View style={styles.emptyCartContainer}>
-            <Text style={styles.emptyCartText}>¡Oh no! No hay productos aún.</Text>
-            <Text style={styles.emptyCartSubText}>Agrega productos para comprar.</Text>
-          </View>
-        ) : (
-          <>
-            <CartList
-              cartItems={cartItems}
-              onQuantityChange={handleQuantityChange}
-              onRemove={handleRemoveItem}
-            />
-            <Text style={styles.totalText}>Total General: ${totalAmount.toFixed(2)}</Text>
-            <View style={styles.buttonGroup}>
-              <Button mode="contained" onPress={handleClearCart} style={[styles.actionButton, styles.clearCartButton]}>
-                Vaciar Carrito
-              </Button>
-              <Button mode="contained" onPress={handleProceedToPayment} style={[styles.actionButton, styles.proceedButton]}>
-                Proceder al Pago
-              </Button>
-            </View>
-            <PaymentModal
-              visible={modalVisible}
-              totalAmount={totalAmount}
-              onClose={() => setModalVisible(false)}
-              onPayWithPayPal={() => {
-                setModalVisible(false);
-                console.log('Pago con PayPal');
-              }}
-              onPayWithCard={() => {
-                setModalVisible(false);
-                console.log('Pago con Tarjeta');
-              }}
-            />
-          </>
-        )}
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button mode="contained" onPress={loadCart}>
+          Reintentar
+        </Button>
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.headerText}>Mi Carrito</Text>
+      <FlatList
+        data={cart?.items}
+        keyExtractor={(item) => item.productId._id}
+        renderItem={({ item }) => (
+          <View style={styles.cartItem}>
+            <Image source={{ uri: item.productId.image_1 }} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.name}>{item.productId.name}</Text>
+              <Text style={styles.price}>${item.productId.price.toFixed(2)}</Text>
+              <View style={styles.quantityControls}>
+                <Button onPress={() => changeItemQuantity(item.productId._id, -1)}>-</Button>
+                <Text style={styles.quantity}>{item.quantity}</Text>
+                <Button onPress={() => changeItemQuantity(item.productId._id, 1)}>+</Button>
+              </View>
+            </View>
+            <Button mode="text" onPress={() => removeItem(item.productId._id)}>
+              Eliminar
+            </Button>
+          </View>
+        )}
+      />
+      <Text style={styles.totalText}>
+        Total: ${cart?.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
+      </Text>
     </View>
   );
 });
 
+
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 16,
-    paddingBottom: 20,
   },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
+    marginVertical: 10,
     color: '#272C73',
+    textAlign: 'center',
+  },
+  cartItem: {
+    flexDirection: 'row',
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    elevation: 2,
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  info: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  price: {
+    fontSize: 14,
+    color: '#666',
+  },
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  quantity: {
+    marginHorizontal: 10,
   },
   totalText: {
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginVertical: 20,
     color: '#272C73',
-    marginVertical: 10,
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 30,
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    borderRadius: 4, // Reducir redondeo aquí
-  },
-  clearCartButton: {
-    backgroundColor: '#282948', // Color de fondo del botón "Vaciar Carrito"
-  },
-  proceedButton: {
-    backgroundColor: '#2F37D0', // Color de fondo del botón "Proceder al Pago"
   },
   loadingContainer: {
     flex: 1,
@@ -187,25 +125,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginTop: 10,
     fontSize: 18,
     color: '#999',
+    marginTop: 10,
   },
-  emptyCartContainer: {
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyCartText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#272C73',
+  errorText: {
+    fontSize: 18,
+    color: '#E53935',
     marginBottom: 10,
-  },
-  emptyCartSubText: {
-    fontSize: 16,
-    color: '#6e6e6e',
-    textAlign: 'center',
   },
 });
 

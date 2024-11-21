@@ -8,6 +8,8 @@ interface ProductModalProps {
   quantity: number;
   setQuantity: (value: number) => void;
   onClose: () => void;
+  onAddToCart: () => void; // Agregar esta línea
+
 }
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, quantity, setQuantity, onClose }) => {
@@ -23,6 +25,10 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, quantity, setQuant
     }
   }, [quantity, product.stock]);
 
+  useEffect(() => {
+    // Mostrar el ID local en la consola al abrir el modal
+    console.log(`Modal abierto para el producto con ID: ${product._id}`);
+  }, [product._id]);
   const handleImageChange = (direction: 'next' | 'prev') => {
     const images = [product.image_1, product.image_2, product.image_3];
     const currentIndex = images.indexOf(currentImage);

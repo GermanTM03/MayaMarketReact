@@ -3,19 +3,18 @@ import { View, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native'
 import TopBar from '../../components/visual/Topbar';
 import ProductList from '../../components/products/ProductList';
 import ProductModal from '../../components/products/ProductModal';
-import { Products } from '../../models/Products'; // Importa tu modelo aquí
+import { Product } from '../../models/Product';
 
 const Home = () => {
-  const [selectedProduct, setSelectedProduct] = useState<Products | null>(null); // Usa el modelo Products
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [quantity, setQuantity] = useState('1');
+  const [quantity, setQuantity] = useState<number>(1); // Cambiado a number
 
-  const handleViewDetails = (product: Products) => {
+  const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);
-    setQuantity('1'); // Resetea la cantidad al abrir un nuevo producto
+    setQuantity(1); // Resetea la cantidad como número
     setModalVisible(true);
   };
-
   const closeModal = () => {
     setSelectedProduct(null);
     setModalVisible(false);
@@ -41,9 +40,9 @@ const Home = () => {
             <View style={styles.modalContainer}>
               <TouchableWithoutFeedback>
                 <View>
-                  <ProductModal
-                    product={selectedProduct} // Aquí se pasa el producto seleccionado
-                    quantity={quantity}
+                <ProductModal
+                    product={selectedProduct}
+                    quantity={quantity} // Ahora es número
                     setQuantity={setQuantity}
                     onAddToCart={handleAddToCart}
                     onClose={closeModal}

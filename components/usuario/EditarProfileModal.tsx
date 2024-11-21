@@ -75,6 +75,13 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
           mode="outlined"
           style={styles.input}
         />
+        <TextInput
+          label="Nuevo Apellido"
+          value={newName}
+          onChangeText={setNewName}
+          mode="outlined"
+          style={styles.input}
+        />
 
         {/* Botón para guardar los cambios */}
         <Button mode="contained" onPress={handleSave} style={styles.button}>
