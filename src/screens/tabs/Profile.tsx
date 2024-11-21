@@ -134,6 +134,7 @@ const Profile = () => {
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
         currentName={user?.name || ''}
+        currentLastName={user?.name || ''}
         currentAvatar={user?.image || ''}
       />
     </View>

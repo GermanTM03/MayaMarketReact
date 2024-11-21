@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image, Text } from 'react-native';
 import { Button, Title, Paragraph } from 'react-native-paper';
 import { Product } from '../../models/Product';
+import { useCartViewModel } from '../../src/viewmodels/CartViewModel';
 
 interface ProductModalProps {
   product: Product;
@@ -15,6 +16,7 @@ interface ProductModalProps {
 const ProductModal: React.FC<ProductModalProps> = ({ product, quantity, setQuantity, onClose }) => {
   const [currentImage, setCurrentImage] = useState(product.image_1);
   const [localQuantity, setLocalQuantity] = useState<number>(1); // Inicia en 1 por defecto
+  const { addItemToCart } = useCartViewModel(); // Importa la función desde el ViewModel
 
   useEffect(() => {
     // Asegurar que la cantidad local sea válida al iniciar
@@ -55,6 +57,19 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, quantity, setQuant
     });
   };
 
+
+  const handleAddToCart = async () => {
+    try {
+      await addItemToCart(product._id, localQuantity); // Llama a la función
+      console.log(`Producto ${product.name} agregado al carrito.`);
+      onClose(); // Cierra el modal
+    } catch (error) {
+      console.error('Error al agregar el producto al carrito:', error);
+    }
+  };
+
+  
+
   return (
     <View style={styles.modalContent}>
       <View style={styles.imageContainer}>
@@ -77,7 +92,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, quantity, setQuant
         </Button>
       </View>
 
-      <Button mode="contained" onPress={onClose} style={styles.addToCartButton}>
+      <Button mode="contained" onPress={handleAddToCart} style={styles.addToCartButton}>
         Agregar al Carrito
       </Button>
       <Button mode="text" onPress={onClose} style={styles.closeButton}>

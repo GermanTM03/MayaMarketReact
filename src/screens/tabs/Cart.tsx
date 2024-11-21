@@ -4,9 +4,8 @@ import { Button } from 'react-native-paper';
 import { useCartViewModel } from '../../viewmodels/CartViewModel';
 
 const Cart = forwardRef((_, ref) => {
-  const { cart, loading, error, loadCart, removeItem, changeItemQuantity } = useCartViewModel();
+  const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity } = useCartViewModel();
 
-  // Usa `useImperativeHandle` para exponer funciones al componente padre
   useImperativeHandle(ref, () => ({
     reloadCart: () => {
       console.log('Recargando carrito...');
@@ -47,12 +46,20 @@ const Cart = forwardRef((_, ref) => {
               <Text style={styles.name}>{item.productId.name}</Text>
               <Text style={styles.price}>${item.productId.price.toFixed(2)}</Text>
               <View style={styles.quantityControls}>
-                <Button onPress={() => changeItemQuantity(item.productId._id, -1)}>-</Button>
+                <Button
+                  onPress={() => changeItemQuantity(item.productId._id, Math.max(1, item.quantity - 1))}
+                >
+                  -
+                </Button>
                 <Text style={styles.quantity}>{item.quantity}</Text>
-                <Button onPress={() => changeItemQuantity(item.productId._id, 1)}>+</Button>
+                <Button
+                  onPress={() => changeItemQuantity(item.productId._id, item.quantity + 1)}
+                >
+                  +
+                </Button>
               </View>
             </View>
-            <Button mode="text" onPress={() => removeItem(item.productId._id)}>
+            <Button mode="text" onPress={() => removeItemFromCart(item.productId._id)}>
               Eliminar
             </Button>
           </View>
@@ -64,7 +71,6 @@ const Cart = forwardRef((_, ref) => {
     </View>
   );
 });
-
 
 const styles = StyleSheet.create({
   container: {
