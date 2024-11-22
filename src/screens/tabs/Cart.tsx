@@ -5,7 +5,8 @@ import { useCartViewModel } from '../../viewmodels/CartViewModel';
 import TopBar from '../../../components/visual/Topbar'; // Asegúrate de usar la ruta correcta
 
 const Cart = forwardRef((_, ref) => {
-  const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity } = useCartViewModel();
+  const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity, clearCart, proceedToPayment } =
+    useCartViewModel();
 
   useImperativeHandle(ref, () => ({
     reloadCart: () => {
@@ -71,6 +72,23 @@ const Cart = forwardRef((_, ref) => {
         <Text style={styles.totalText}>
           Total: ${cart?.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
         </Text>
+        <View style={styles.footerButtons}>
+          <Button
+            mode="contained"
+            style={styles.button}
+            onPress={() => clearCart()}
+          >
+            Vaciar Carrito
+          </Button>
+          <Button
+            mode="contained"
+            style={styles.button}
+            onPress={() => proceedToPayment()}
+            color="#4CAF50"
+          >
+            Proceder al Pago
+          </Button>
+        </View>
       </View>
     </View>
   );
@@ -132,6 +150,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginVertical: 20,
     color: '#272C73',
+  },
+  footerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 20,
+  },
+  button: {
+    flex: 1,
+    marginHorizontal: 5,
   },
   loadingContainer: {
     flex: 1,

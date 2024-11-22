@@ -100,6 +100,47 @@ export const useCartViewModel = () => {
     loadCart();
   }, []);
 
+
+  
+  const clearCart = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+  
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('No se encontró el ID del usuario.');
+  
+      // Realizar la solicitud DELETE con el cuerpo JSON
+      const response = await axios.delete(
+        'https://mayaapi.onrender.com/api/cart/clear',
+        {
+          data: { userId }, // Este es el cuerpo de la solicitud DELETE
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+  
+      console.log('Respuesta del servidor:', response.data);
+      setCart(null); // Vaciar el carrito en el estado local
+    } catch (err: any) {
+      console.error(
+        'Error en clearCart:',
+        err.response?.data || err.message || err
+      );
+      setError(err.message || 'Error al vaciar el carrito');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
+
+  const proceedToPayment = () => {
+    // Lógica para redirigir al flujo de pago
+    console.log("Procediendo al pago...");
+    // Aquí puedes implementar la navegación o integración con un servicio de pagos
+  };
   return {
     cart,
     loading,
@@ -109,5 +150,7 @@ export const useCartViewModel = () => {
     removeItemFromCart,
     changeItemQuantity,
     addItemToCart,
+    clearCart,
+    proceedToPayment,
   };
 };
