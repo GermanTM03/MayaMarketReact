@@ -39,7 +39,6 @@ const Profile = () => {
     { label: 'Leer QR', icon: 'qrcode-scan', route: 'Lector' },
     { label: 'Mis QR', icon: 'qrcode', route: 'MisQr' },
     { label: 'Ayuda', icon: 'help-circle', route: 'Ayuda' },
-    { label: 'Configuración', icon: 'cog', route: 'Configuracion' },
   ];
 
   useEffect(() => {

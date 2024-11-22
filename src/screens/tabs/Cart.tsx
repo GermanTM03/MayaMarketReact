@@ -2,6 +2,7 @@ import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, FlatList, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useCartViewModel } from '../../viewmodels/CartViewModel';
+import TopBar from '../../../components/visual/Topbar'; // Asegúrate de usar la ruta correcta
 
 const Cart = forwardRef((_, ref) => {
   const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity } = useCartViewModel();
@@ -35,39 +36,42 @@ const Cart = forwardRef((_, ref) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Mi Carrito</Text>
-      <FlatList
-        data={cart?.items}
-        keyExtractor={(item) => item.productId._id}
-        renderItem={({ item }) => (
-          <View style={styles.cartItem}>
-            <Image source={{ uri: item.productId.image_1 }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={styles.name}>{item.productId.name}</Text>
-              <Text style={styles.price}>${item.productId.price.toFixed(2)}</Text>
-              <View style={styles.quantityControls}>
-                <Button
-                  onPress={() => changeItemQuantity(item.productId._id, Math.max(1, item.quantity - 1))}
-                >
-                  -
-                </Button>
-                <Text style={styles.quantity}>{item.quantity}</Text>
-                <Button
-                  onPress={() => changeItemQuantity(item.productId._id, item.quantity + 1)}
-                >
-                  +
-                </Button>
+      <TopBar />
+      <View style={styles.content}>
+        <Text style={styles.headerText}>Mi Carrito</Text>
+        <FlatList
+          data={cart?.items}
+          keyExtractor={(item) => item.productId._id}
+          renderItem={({ item }) => (
+            <View style={styles.cartItem}>
+              <Image source={{ uri: item.productId.image_1 }} style={styles.image} />
+              <View style={styles.info}>
+                <Text style={styles.name}>{item.productId.name}</Text>
+                <Text style={styles.price}>${item.productId.price.toFixed(2)}</Text>
+                <View style={styles.quantityControls}>
+                  <Button
+                    onPress={() => changeItemQuantity(item.productId._id, Math.max(1, item.quantity - 1))}
+                  >
+                    -
+                  </Button>
+                  <Text style={styles.quantity}>{item.quantity}</Text>
+                  <Button
+                    onPress={() => changeItemQuantity(item.productId._id, item.quantity + 1)}
+                  >
+                    +
+                  </Button>
+                </View>
               </View>
+              <Button mode="text" onPress={() => removeItemFromCart(item.productId._id)}>
+                Eliminar
+              </Button>
             </View>
-            <Button mode="text" onPress={() => removeItemFromCart(item.productId._id)}>
-              Eliminar
-            </Button>
-          </View>
-        )}
-      />
-      <Text style={styles.totalText}>
-        Total: ${cart?.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
-      </Text>
+          )}
+        />
+        <Text style={styles.totalText}>
+          Total: ${cart?.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
+        </Text>
+      </View>
     </View>
   );
 });
@@ -76,7 +80,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: 16,
+    paddingTop: 60, // Deja espacio para el TopBar
   },
   headerText: {
     fontSize: 20,
