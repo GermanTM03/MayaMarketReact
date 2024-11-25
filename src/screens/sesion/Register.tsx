@@ -16,6 +16,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 
 const { width } = Dimensions.get('window');
 
+
+
 // Define las rutas
 type RootStackParamList = {
   Welcome: undefined;
