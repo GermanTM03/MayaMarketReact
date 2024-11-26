@@ -3,10 +3,20 @@ import { View, StyleSheet, Text, ActivityIndicator, FlatList, Image } from 'reac
 import { Button } from 'react-native-paper';
 import { useCartViewModel } from '../../viewmodels/CartViewModel';
 import TopBar from '../../../components/visual/Topbar'; // Asegúrate de usar la ruta correcta
+import { useNavigation } from '@react-navigation/native'; // Importa el hook de navegación
+import { StackNavigationProp } from '@react-navigation/stack';
+
+type RootStackParamList = {
+  Cart: undefined;
+  PaymentGateway: undefined;
+};
 
 const Cart = forwardRef((_, ref) => {
   const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity, clearCart, proceedToPayment } =
     useCartViewModel();
+    const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'Cart'>>();
+
+
 
   useImperativeHandle(ref, () => ({
     reloadCart: () => {
@@ -14,6 +24,7 @@ const Cart = forwardRef((_, ref) => {
       loadCart();
     },
   }));
+// Define el tipo de rutas
 
   if (loading) {
     return (
@@ -83,7 +94,7 @@ const Cart = forwardRef((_, ref) => {
           <Button
             mode="contained"
             style={styles.button}
-            onPress={() => proceedToPayment()}
+            onPress={() => navigation.navigate('PaymentGateway')} // Redirige a la pasarela
             color="#4CAF50"
           >
             Proceder al Pago

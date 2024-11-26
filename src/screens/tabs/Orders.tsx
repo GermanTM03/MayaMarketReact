@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useImperativeHandle, forwardRef  } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopBar from '../../../components/visual/Topbar';
@@ -40,11 +40,19 @@ const statusStyles: Record<Order['status'], { color: string }> = {
   almacenado: { color: 'blue' },
 };
 
-const Orders = () => {
+const Orders = forwardRef((_, ref) => {
   const [orders, setOrders] = useState<OrderWithProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+
+  useImperativeHandle(ref, () => ({
+    reloadOrders: () => {
+      console.log('Recargando órdenes...');
+      fetchOrders();
+    },
+  }));
 
   const fetchOrders = async () => {
     try {
@@ -53,13 +61,21 @@ const Orders = () => {
         console.error('ID de usuario no encontrado en AsyncStorage');
         return;
       }
-
+  
       const response = await fetch(`https://mayaapi.onrender.com/api/orders/user/${userId}`);
       if (!response.ok) {
+        if (response.status === 404) {
+          // Manejo específico para el error 404
+          setOrders([]);
+          setLoading(false);
+          console.warn('Opa no tienes órdenes, empieza a comprar para ver tus pedidos');
+          return;
+        }
         throw new Error(`Error al obtener órdenes: ${response.status}`);
       }
+  
       const ordersData: Order[] = await response.json();
-
+  
       const ordersWithProducts = await Promise.all(
         ordersData.map(async (order) => {
           const productId = order.productId._id;
@@ -77,7 +93,7 @@ const Orders = () => {
           }
         })
       );
-
+  
       setOrders(ordersWithProducts);
     } catch (error) {
       console.error('Error al obtener las órdenes:', error);
@@ -85,6 +101,7 @@ const Orders = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchOrders();
@@ -98,6 +115,17 @@ const Orders = () => {
       </View>
     );
   }
+  if (orders.length === 0) {
+    return (
+      <View style={styles.container}>
+        <TopBar />
+        <View style={styles.content}>
+          <Text style={styles.noOrdersText}>Opa no tienes órdenes, empieza a comprar para ver tus pedidos.</Text>
+        </View>
+      </View>
+    );
+  }
+  
 
   return (
     <View style={styles.container}>
@@ -163,7 +191,7 @@ const Orders = () => {
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -184,6 +212,8 @@ const styles = StyleSheet.create({
   modalClose: { marginTop: 20 },
   modalCloseText: { color: '#000', fontSize: 16 },
   fullscreenImage: { width: 300, height: 300, resizeMode: 'contain' },
+  noOrdersText: { textAlign: 'center', fontSize: 16, color: '#555', marginTop: 20 },
+
 });
 
 export default Orders;

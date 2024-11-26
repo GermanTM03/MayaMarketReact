@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { View, StyleSheet, Modal, TouchableWithoutFeedback } from 'react-native';
 import TopBar from '../../components/visual/Topbar';
 import ProductList from '../../components/products/ProductList';
 import ProductModal from '../../components/products/ProductModal';
 import { Product } from '../../models/Product';
 
-const Home = () => {
+const Home = forwardRef((_, ref) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [quantity, setQuantity] = useState<number>(1); // Cambiado a number
+  const [quantity, setQuantity] = useState<number>(1);
+
+  // Exponer métodos al padre usando ref
+  useImperativeHandle(ref, () => ({
+    reloadProducts: () => {
+      console.log('Recargando lista de productos...');
+      // Aquí puedes agregar la lógica para recargar la lista de productos si es necesario
+    },
+  }));
 
   const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);
-    setQuantity(1); // Resetea la cantidad como número
+    setQuantity(1); // Resetea la cantidad
     setModalVisible(true);
   };
+
   const closeModal = () => {
     setSelectedProduct(null);
     setModalVisible(false);
@@ -28,7 +37,10 @@ const Home = () => {
   return (
     <View style={styles.container}>
       <TopBar />
-      <ProductList onViewDetails={handleViewDetails} /> {/* Asegúrate de que ProductList pase un producto de tipo Products */}
+      {/* Lista de productos */}
+      <ProductList onViewDetails={handleViewDetails} />
+
+      {/* Modal para mostrar detalles del producto */}
       {selectedProduct && (
         <Modal
           visible={modalVisible}
@@ -40,9 +52,9 @@ const Home = () => {
             <View style={styles.modalContainer}>
               <TouchableWithoutFeedback>
                 <View>
-                <ProductModal
+                  <ProductModal
                     product={selectedProduct}
-                    quantity={quantity} // Ahora es número
+                    quantity={quantity}
                     setQuantity={setQuantity}
                     onAddToCart={handleAddToCart}
                     onClose={closeModal}
@@ -55,7 +67,7 @@ const Home = () => {
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

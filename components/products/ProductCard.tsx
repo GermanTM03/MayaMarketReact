@@ -1,7 +1,8 @@
 import React from 'react';
-import { Card, Title, Paragraph, Button } from 'react-native-paper';
-import { StyleSheet } from 'react-native';
+import { Card, Title, Paragraph } from 'react-native-paper';
+import { StyleSheet, View, Image, TouchableWithoutFeedback } from 'react-native';
 import { Product } from '../../models/Product';
+import { MaterialIcons } from '@expo/vector-icons'; // Asegúrate de tener esta librería instalada
 
 const ProductCard = ({
   item,
@@ -10,19 +11,27 @@ const ProductCard = ({
   item: Product;
   onViewDetails: (product: Product) => void;
 }) => (
-  <Card style={styles.card}>
-    <Card.Cover source={{ uri: item.image_1 }} />
-    <Card.Content>
-      <Title>{item.name}</Title>
-      <Paragraph>Stock: {item.stock}</Paragraph>
-      <Paragraph style={styles.price}>$ {item.price.toFixed(2)}</Paragraph>
-    </Card.Content>
-    <Card.Actions>
-      <Button mode="contained" onPress={() => onViewDetails(item)} style={styles.button}>
-        Ver Detalles
-      </Button>
-    </Card.Actions>
-  </Card>
+  <TouchableWithoutFeedback onPress={() => onViewDetails(item)}>
+    <Card style={styles.card}>
+      <View style={styles.content}>
+        {/* Imagen del producto */}
+        <Image source={{ uri: item.image_1 }} style={styles.image} />
+        {/* Información del producto */}
+        <View style={styles.info}>
+          <Title style={styles.name}>{item.name}</Title>
+          <Paragraph style={styles.stock}>Cantidad disponible: {item.stock}</Paragraph>
+          <Paragraph style={styles.price}>$ {item.price.toFixed(2)}</Paragraph>
+          {/* Información de entrega con ícono */}
+          <View style={styles.deliveryContainer}>
+            <MaterialIcons name="location-on" size={16} color="#555" />
+            <Paragraph style={styles.deliveryText}>
+              Cancún, QROO, Universidad Tecnológica de Cancún
+            </Paragraph>
+          </View>
+        </View>
+      </View>
+    </Card>
+  </TouchableWithoutFeedback>
 );
 
 const styles = StyleSheet.create({
@@ -30,15 +39,47 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 3,
     borderRadius: 8,
+    overflow: 'hidden',
+    padding: 8,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  image: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    marginRight: 16,
+  },
+  info: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  stock: {
+    fontSize: 14,
+    color: '#6e6e6e',
+    marginBottom: 8,
   },
   price: {
-    marginTop: 8,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#272C73',
   },
-  button: {
-    backgroundColor: '#2F37D0',
-    borderRadius: 4,
+  deliveryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  deliveryText: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 4, // Espaciado entre el ícono y el texto
   },
 });
 

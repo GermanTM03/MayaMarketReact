@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useImperativeHandle, forwardRef  } from 'react';
 import { StyleSheet, View, Alert, ActivityIndicator } from 'react-native';
 import { Button, List } from 'react-native-paper';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -24,7 +24,7 @@ interface MenuItem {
   route: keyof RootStackParamList;
 }
 
-const Profile = () => {
+const Profile = forwardRef((_, ref) => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { bottom } = useSafeAreaInsets();
 
@@ -39,20 +39,32 @@ const Profile = () => {
     { label: 'Leer QR', icon: 'qrcode-scan', route: 'Lector' },
     { label: 'Mis QR', icon: 'qrcode', route: 'MisQr' },
     { label: 'Ayuda', icon: 'help-circle', route: 'Ayuda' },
+  
   ];
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await ProfileViewModel.getUser();
-        setUser(userData);
-      } catch (error) {
-        Alert.alert('Error', error instanceof Error ? error.message : 'Ocurrió un error');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Función para exponer métodos al padre
+  useImperativeHandle(ref, () => ({
+    reloadProfile: async () => {
+      console.log('Recargando perfil...');
+      await fetchUser();
+    },
+  }));
+  
 
+  // Obtener información del usuario
+  const fetchUser = async () => {
+    try {
+      setLoading(true);
+      const userData = await ProfileViewModel.getUser();
+      setUser(userData);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Ocurrió un error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUser();
   }, []);
 
@@ -133,12 +145,13 @@ const Profile = () => {
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
         currentName={user?.name || ''}
-        currentLastName={user?.name || ''}
+        currentLastName={user?.lastname || ''}
         currentAvatar={user?.image || ''}
       />
     </View>
   );
-};
+
+});
 
 const styles = StyleSheet.create({
   container: {
