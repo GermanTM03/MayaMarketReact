@@ -4,12 +4,12 @@
     "slug": "MayaMarket",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logos/app_logo_mayamarket.png",
     "userInterfaceStyle": "light",
     "permissions": ["CAMERA"],
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logos/app_logo_mayamarket.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logos/app_logo_mayamarket.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.germantm03.MayaMarket"

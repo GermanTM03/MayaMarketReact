@@ -90,7 +90,7 @@ const PaymentGateway = () => {
         await new Promise((resolve) => setTimeout(resolve, 5000));
 
         // Redirigir a la pantalla "MisQr"
-        navigation.navigate('MisQr');
+        navigation.navigate('Home');
       } catch (error) {
         Alert.alert('Error', error instanceof Error ? error.message : 'Error desconocido.');
         setShowSplash(false); // Ocultar splash si ocurre un error

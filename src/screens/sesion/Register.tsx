@@ -14,6 +14,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage
 
 const { width } = Dimensions.get('window');
 
@@ -44,6 +45,19 @@ const Register = () => {
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   useEffect(() => {
+    const checkUserLoggedIn = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId) {
+          // Redirige automáticamente si hay un userId
+          navigation.navigate('Home');
+        }
+      } catch (error) {
+        console.error('Error al verificar el userId almacenado:', error);
+      }
+    };
+
+    checkUserLoggedIn();
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
     });
