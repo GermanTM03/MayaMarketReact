@@ -13,10 +13,10 @@ import { TextInput, Button, Text, RadioButton } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage
 
 const { width } = Dimensions.get('window');
-
-
 
 // Define las rutas
 type RootStackParamList = {
@@ -29,7 +29,8 @@ type RootStackParamList = {
 type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
 
 const Register = () => {
-  const [fullName, setFullName] = useState('');
+  const [name, setName] = useState('');
+  const [lastname, setLastName] = useState('');
   const [matricula, setMatricula] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -39,10 +40,24 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [emailError, setEmailError] = useState(''); // Para mostrar errores en el correo
 
   const navigation = useNavigation<RegisterScreenNavigationProp>();
 
   useEffect(() => {
+    const checkUserLoggedIn = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (storedUserId) {
+          // Redirige automáticamente si hay un userId
+          navigation.navigate('Home');
+        }
+      } catch (error) {
+        console.error('Error al verificar el userId almacenado:', error);
+      }
+    };
+
+    checkUserLoggedIn();
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
     });
@@ -56,22 +71,56 @@ const Register = () => {
     };
   }, []);
 
-  const handleRegister = () => {
+  // Validar dominio del correo
+  const validateEmail = (inputEmail: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@utcancun\.edu\.mx$/;
+    if (emailRegex.test(inputEmail)) {
+      setEmailError('');
+      return true;
+    } else {
+      setEmailError('El correo debe tener el dominio @utcancun.edu.mx');
+      return false;
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!validateEmail(email)) {
+      console.log('Correo inválido');
+      return;
+    }
+
     if (password !== confirmPassword) {
       console.log('Las contraseñas no coinciden');
       return;
     }
 
-    console.log('Register:', {
-      fullName,
-      matricula,
-      phone,
-      email,
-      password,
-      gender,
-    });
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('lastName', lastname);
+    formData.append('matricula', matricula);
+    formData.append('phone', phone);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('gender', gender);
 
-    navigation.navigate('Home');
+    try {
+      const response = await axios.post('https://mayaapi.onrender.com/api/users', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('Registro exitoso:', response.data);
+      navigation.navigate('Home');
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error('Error al registrarse:', error.response?.data || error.message);
+      } else if (error instanceof Error) {
+        console.error('Error inesperado:', error.message);
+      } else {
+        console.error('Error desconocido');
+      }
+    }
   };
 
   return (
@@ -95,9 +144,17 @@ const Register = () => {
         <Text style={styles.title}>Regístrate</Text>
 
         <TextInput
-          label="Nombre completo"
-          value={fullName}
-          onChangeText={setFullName}
+          label="Nombre/s"
+          value={name}
+          onChangeText={setName}
+          mode="outlined"
+          style={styles.input}
+        />
+
+        <TextInput
+          label="Apellido/s"
+          value={lastname}
+          onChangeText={setLastName}
           mode="outlined"
           style={styles.input}
         />
@@ -105,15 +162,22 @@ const Register = () => {
         <TextInput
           label="Matrícula"
           value={matricula}
-          onChangeText={setMatricula}
+          onChangeText={(text) => {
+            const numericText = text.replace(/[^0-9]/g, '').slice(0, 8);
+            setMatricula(numericText);
+          }}
           mode="outlined"
           style={styles.input}
+          keyboardType="numeric"
         />
 
         <TextInput
           label="Teléfono"
           value={phone}
-          onChangeText={setPhone}
+          onChangeText={(text) => {
+            const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+            setPhone(numericText);
+          }}
           mode="outlined"
           keyboardType="phone-pad"
           style={styles.input}
@@ -122,12 +186,17 @@ const Register = () => {
         <TextInput
           label="Correo electrónico"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            validateEmail(text); // Valida mientras se escribe
+          }}
           mode="outlined"
           keyboardType="email-address"
           autoCapitalize="none"
           style={styles.input}
+          error={!!emailError}
         />
+        {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
         <TextInput
           label="Contraseña"
@@ -162,11 +231,11 @@ const Register = () => {
         <Text style={styles.subtitle}>Género</Text>
         <RadioButton.Group onValueChange={setGender} value={gender}>
           <View style={styles.radioContainerShort}>
-            <RadioButton value="male" />
+            <RadioButton value="Masculino" />
             <Text style={styles.radioLabel}>Masculino</Text>
-            <RadioButton value="female" />
+            <RadioButton value="Femenino" />
             <Text style={styles.radioLabel}>Femenino</Text>
-            <RadioButton value="other" />
+            <RadioButton value="Otro" />
             <Text style={styles.radioLabel}>Otro</Text>
           </View>
         </RadioButton.Group>
@@ -249,6 +318,12 @@ const styles = StyleSheet.create({
   loginLink: {
     color: '#272C73',
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
+    alignSelf: 'flex-start',
   },
 });
 

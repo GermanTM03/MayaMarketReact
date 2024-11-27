@@ -1,68 +1,154 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Modal, Text, TouchableOpacity, Image } from 'react-native';
-import { Card, Title, Paragraph, Button, IconButton } from 'react-native-paper';
-import QRCode from 'react-native-qrcode-svg';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Alert,
+  Image,
+  Modal,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { Title, Paragraph, IconButton } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
-  id: number;
+  _id: string;
   name: string;
   price: number;
   quantity: number;
-  image: string;
+  image_1: string;
+  image_2: string;
+  image_3: string;
 }
 
-const products: Product[] = [
-  { id: 1, name: 'Producto 1', price: 100, quantity: 10, image: 'https://via.placeholder.com/150' },
-  { id: 2, name: 'Producto 2', price: 200, quantity: 5, image: 'https://via.placeholder.com/150' },
-  { id: 3, name: 'Producto 3', price: 150, quantity: 8, image: 'https://via.placeholder.com/150' },
-  { id: 4, name: 'Producto 4', price: 300, quantity: 2, image: 'https://via.placeholder.com/150' },
-  { id: 5, name: 'Producto 5', price: 50, quantity: 20, image: 'https://via.placeholder.com/150' },
-];
+const MisProductosScreen: React.FC = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [selectedProductImages, setSelectedProductImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
-const MisQrsScreen = () => {
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
+  useEffect(() => {
+    const fetchUserIdAndProducts = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        if (!storedUserId) {
+          console.error('No se encontró el userId almacenado.');
+          return;
+        }
+        setUserId(storedUserId);
+        fetchProducts(storedUserId);
+      } catch (error) {
+        console.error('Error al recuperar el userId:', error);
+      }
+    };
 
-  const handleViewQR = (product: Product) => {
-    setSelectedProduct(product);
+    fetchUserIdAndProducts();
+  }, []);
+
+  const fetchProducts = async (userId: string) => {
+    const apiUrl = `https://mayaapi.onrender.com/api/products/user/${userId}`;
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProduct = async (id: string) => {
+    const apiUrl = `https://mayaapi.onrender.com/api/products/${id}`;
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setProducts((prevProducts) => prevProducts.filter((product) => product._id !== id));
+        Alert.alert('Éxito', 'Producto eliminado exitosamente.');
+      } else {
+        Alert.alert('Error', 'No se pudo eliminar el producto.');
+      }
+    } catch (error) {
+      console.error('Error al eliminar producto:', error);
+      Alert.alert('Error', 'Ocurrió un problema al eliminar el producto.');
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert(
+      'Confirmación',
+      '¿Estás seguro de eliminar este producto?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Eliminar',
+          onPress: () => deleteProduct(id),
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const openModal = (images: string[]) => {
+    setSelectedProductImages(images);
+    setCurrentImageIndex(0); // Comenzar desde la primera imagen
     setModalVisible(true);
   };
 
+  const showNextImage = () => {
+    if (currentImageIndex < selectedProductImages.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  };
+
+  const showPreviousImage = () => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  };
+
   const renderProduct = ({ item }: { item: Product }) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        {/* Contenedor horizontal para imagen y texto */}
-        <View style={styles.productRow}>
-          {/* Imagen del producto */}
-          <Image source={{ uri: item.image }} style={styles.productImage} />
-          {/* Información del producto */}
-          <View style={styles.productInfo}>
-            <Title>{item.name}</Title>
-            <Paragraph>Precio: ${item.price}</Paragraph>
-            <Paragraph>Cantidad: {item.quantity}</Paragraph>
-          </View>
-          {/* Botón con icono de QR */}
-          <IconButton
-            icon="qrcode-scan"
-            size={30}
-            onPress={() => handleViewQR(item)}
-            style={styles.viewQrButton}
-          />
-        </View>
-      </Card.Content>
-    </Card>
+    <View style={styles.listItem}>
+      <TouchableOpacity onPress={() => openModal([item.image_1, item.image_2, item.image_3])}>
+        <Image source={{ uri: item.image_1 }} style={styles.productImage} />
+      </TouchableOpacity>
+      <View style={styles.productInfo}>
+        <Title>{item.name}</Title>
+        <Paragraph>Precio: ${item.price}</Paragraph>
+        <Paragraph>Cantidad: {item.quantity}</Paragraph>
+      </View>
+      <IconButton
+        icon="delete"
+        iconColor="red"
+        onPress={() => handleDelete(item._id)}
+        style={styles.deleteButton}
+      />
+    </View>
   );
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={products}
-        renderItem={renderProduct}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
-      />
+      {loading ? (
+        <ActivityIndicator animating={true} size="large" />
+      ) : (
+        <FlatList
+          data={products}
+          renderItem={renderProduct}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
 
-      {/* Modal para mostrar el QR */}
+      {/* Modal para imágenes */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -71,18 +157,35 @@ const MisQrsScreen = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>QR de {selectedProduct?.name}</Text>
-            {selectedProduct && (
-              <QRCode
-                value={JSON.stringify({
-                  id: selectedProduct.id,
-                  name: selectedProduct.name,
-                  price: selectedProduct.price,
-                  quantity: selectedProduct.quantity,
-                })}
-                size={200}
+            {selectedProductImages.length > 0 && (
+              <Image
+                source={{ uri: selectedProductImages[currentImageIndex] }}
+                style={styles.modalImage}
               />
             )}
+            <View style={styles.navigationButtons}>
+              <TouchableOpacity
+                onPress={showPreviousImage}
+                disabled={currentImageIndex === 0}
+              >
+                <Text style={[styles.navButton, currentImageIndex === 0 && styles.disabledNav]}>
+                  Anterior
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={showNextImage}
+                disabled={currentImageIndex === selectedProductImages.length - 1}
+              >
+                <Text
+                  style={[
+                    styles.navButton,
+                    currentImageIndex === selectedProductImages.length - 1 && styles.disabledNav,
+                  ]}
+                >
+                  Siguiente
+                </Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
@@ -104,52 +207,66 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
-  card: {
-    marginBottom: 16,
-    elevation: 3,
-  },
-  // Contenedor de los elementos en fila (imagen + info + QR)
-  productRow: {
+  listItem: {
     flexDirection: 'row',
-    alignItems: 'center', // Asegura que los elementos estén alineados verticalmente
-    justifyContent: 'space-between', // Espacia los elementos
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 8,
+    elevation: 2,
   },
   productImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 5,
+    width: 80,
+    height: 80,
+    borderRadius: 8,
     marginRight: 16,
   },
   productInfo: {
-    flex: 1, // Toma todo el espacio restante
+    flex: 1,
   },
-  viewQrButton: {
-    backgroundColor: 'transparent',
+  deleteButton: {
+    marginLeft: 8,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    width: 300,
-    padding: 20,
     backgroundColor: 'white',
-    borderRadius: 10,
+    borderRadius: 8,
+    padding: 16,
     alignItems: 'center',
+    width: '90%',
   },
-  modalTitle: {
+  modalImage: {
+    width: 250,
+    height: 250,
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  navigationButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 16,
+  },
+  navButton: {
+    color: 'blue',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
+  },
+  disabledNav: {
+    color: 'gray',
   },
   closeButton: {
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#E53935',
-    borderRadius: 5,
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginTop: 16,
   },
   closeButtonText: {
     color: 'white',
@@ -157,4 +274,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MisQrsScreen;
+export default MisProductosScreen;

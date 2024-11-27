@@ -1,12 +1,13 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, FlatList, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useCartViewModel } from '../../viewmodels/CartViewModel';
 import TopBar from '../../../components/visual/Topbar'; // Asegúrate de usar la ruta correcta
+import PaymentComponent from '../../../components/PaymentComponent'; // Importa el componente PaymentComponent
 
 const Cart = forwardRef((_, ref) => {
-  const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity, clearCart, proceedToPayment } =
-    useCartViewModel();
+  const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity, clearCart } = useCartViewModel();
+  const [showPaymentModal, setShowPaymentModal] = useState(false); // Estado para el modal de pago
 
   useImperativeHandle(ref, () => ({
     reloadCart: () => {
@@ -83,13 +84,19 @@ const Cart = forwardRef((_, ref) => {
           <Button
             mode="contained"
             style={styles.button}
-            onPress={() => proceedToPayment()}
+            onPress={() => setShowPaymentModal(true)} // Mostrar el modal
             color="#4CAF50"
           >
             Proceder al Pago
           </Button>
         </View>
       </View>
+
+      {/* Modal de Pago */}
+      <PaymentComponent
+        visible={showPaymentModal} // Pasar la propiedad visible
+        onClose={() => setShowPaymentModal(false)} // Pasar la función para cerrar
+      />
     </View>
   );
 });

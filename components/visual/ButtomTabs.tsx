@@ -16,10 +16,12 @@ const BottomTabs = () => {
 
   // Usaremos una referencia para llamar a la función de recarga dentro de Cart
   const cartRef = useRef<any>(null);
+  const homeRef = useRef<any>(null);
+  const orderRef = useRef<any>(null);
 
   const renderScene = BottomNavigation.SceneMap({
-    home: Home,
-    orders: Orders,
+    home: () => <Home ref={homeRef} />, // Pasamos la referencia al componente Cart
+    orders:()=><Orders  ref={orderRef}/>,
     cart: () => <Cart ref={cartRef} />, // Pasamos la referencia al componente Cart
     profile: Profile,
   });
