@@ -1,19 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const TopBar = () => {
+interface TopBarProps {
+  onSearch: (query: string) => void;
+  navigateToHome: () => void;
+}
+
+const TopBar: React.FC<TopBarProps> = ({ onSearch, navigateToHome }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    onSearch(text);
+  };
+
   return (
     <View style={styles.topBar}>
+   
       <View style={styles.searchInputContainer}>
         <MaterialIcons name="search" size={24} color="#6e6e6e" />
         <TextInput
           style={styles.textInput}
           placeholder="Buscar en MayaMarket"
           placeholderTextColor="#6e6e6e"
+          value={searchQuery}
+          onChangeText={handleSearch}
         />
       </View>
-   
     </View>
   );
 };
@@ -25,6 +39,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#272C73',
     paddingHorizontal: 10,
     paddingVertical: 18,
+  },
+  homeButton: {
+    marginRight: 10,
   },
   searchInputContainer: {
     flex: 1,
@@ -40,12 +57,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     marginLeft: 10,
-  },
-  qrButton: {
-    marginLeft: 10,
-    backgroundColor: '#232f3e',
-    borderRadius: 8,
-    padding: 8,
   },
 });
 

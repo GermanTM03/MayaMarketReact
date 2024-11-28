@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, Button, StyleSheet, Text } from 'react-native'; // Asegúrate de importar Text
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet,Button } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import OrderList from './OrderList';
-import QRScanner from './QRScanner';
-
-const OrdersScreen = () => {
+const AlmacenScreen = () => {
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<string | null>(null);
 
@@ -14,15 +13,8 @@ const OrdersScreen = () => {
 
   return (
     <View style={styles.container}>
-      {scanning ? (
-        <QRScanner onScan={handleScan} />
-      ) : (
-        <>
-          <Button title="Escanear QR" onPress={() => setScanning(true)} />
-          {scannedData && <Text>Dato escaneado: {scannedData}</Text>}
+    
           <OrderList />
-        </>
-      )}
     </View>
   );
 };
@@ -33,4 +25,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrdersScreen;
+
+export default AlmacenScreen;

@@ -1,17 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FlatList, StyleSheet, ActivityIndicator, View, Text, Button } from 'react-native';
+import { FlatList, StyleSheet, ActivityIndicator, View, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ProductCard from './ProductCard';
 import { Product } from '../../models/Product';
 
-const ProductList = ({ onViewDetails }: { onViewDetails: (product: Product) => void }) => {
+interface ProductListProps {
+  onViewDetails: (product: Product) => void;
+  navigation: any;
+  searchQuery: string;
+}
+
+const ProductList: React.FC<ProductListProps> = ({ onViewDetails, navigation, searchQuery }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [visibleProducts, setVisibleProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0); // Control de páginas
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const itemsPerPage = 3; // Cantidad de productos por lote
+  const itemsPerPage = 3;
 
   const fetchProducts = async () => {
     try {
@@ -30,7 +37,8 @@ const ProductList = ({ onViewDetails }: { onViewDetails: (product: Product) => v
       const filteredProducts = data.filter((product) => product.userId !== storedUserId);
 
       setProducts(filteredProducts);
-      setVisibleProducts(filteredProducts.slice(0, itemsPerPage)); // Cargar el primer lote
+      setFilteredProducts(filteredProducts);
+      setVisibleProducts(filteredProducts.slice(0, itemsPerPage));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
@@ -42,16 +50,26 @@ const ProductList = ({ onViewDetails }: { onViewDetails: (product: Product) => v
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    const query = searchQuery ? searchQuery.toLowerCase() : '';
+    const results = products.filter((product) =>
+      (product.name || '').toLowerCase().includes(query)
+    );
+    setFilteredProducts(results);
+    setVisibleProducts(results.slice(0, itemsPerPage));
+    setCurrentPage(0);
+  }, [searchQuery]);
+
   const loadMore = useCallback(() => {
     const nextPage = currentPage + 1;
     const startIndex = nextPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
-    if (startIndex < products.length) {
-      setVisibleProducts((prev) => [...prev, ...products.slice(startIndex, endIndex)]);
+    if (startIndex < filteredProducts.length) {
+      setVisibleProducts((prev) => [...prev, ...filteredProducts.slice(startIndex, endIndex)]);
       setCurrentPage(nextPage);
     }
-  }, [currentPage, products]);
+  }, [currentPage, filteredProducts]);
 
   if (loading) {
     return (
@@ -84,10 +102,10 @@ const ProductList = ({ onViewDetails }: { onViewDetails: (product: Product) => v
       renderItem={({ item }) => <ProductCard item={item} onViewDetails={onViewDetails} />}
       keyExtractor={(item) => item._id.toString()}
       contentContainerStyle={styles.listContainer}
-      onEndReached={loadMore} // Carga más productos al llegar al final
-      onEndReachedThreshold={0.5} // Umbral para iniciar la carga
+      onEndReached={loadMore}
+      onEndReachedThreshold={0.5}
       ListFooterComponent={
-        visibleProducts.length < products.length ? (
+        visibleProducts.length < filteredProducts.length ? (
           <ActivityIndicator size="small" color="#272C73" />
         ) : (
           <Text style={styles.noMoreText}>No hay más productos</Text>

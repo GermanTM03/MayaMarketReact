@@ -2,7 +2,7 @@ import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, FlatList, Image } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useCartViewModel } from '../../viewmodels/CartViewModel';
-import TopBar from '../../../components/visual/Topbar'; // Asegúrate de usar la ruta correcta
+import TopBar from '../../../components/visual/AnimacionTopBar'; // Asegúrate de usar la ruta correcta
 import PaymentComponent from '../../../components/PaymentComponent'; // Importa el componente PaymentComponent
 
 const Cart = forwardRef((_, ref) => {

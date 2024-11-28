@@ -48,11 +48,14 @@ const OrderList = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const filtered = orders.filter(
-      (order) =>
-        order.userId.name.toLowerCase().includes(query.toLowerCase()) ||
-        order.productId.name?.toLowerCase().includes(query.toLowerCase())
-    );
+    const filtered = orders.filter((order) => {
+      const lowerQuery = query.toLowerCase();
+      return (
+        order._id.toLowerCase().includes(lowerQuery) || // Filtrar por ID de la orden
+        order.userId.name.toLowerCase().includes(lowerQuery) || // Filtrar por nombre de usuario
+        order.productId.name?.toLowerCase().includes(lowerQuery) // Filtrar por nombre del producto
+      );
+    });
     setFilteredOrders(filtered);
   };
 
@@ -65,27 +68,25 @@ const OrderList = () => {
     );
   }
 
-  if (filteredOrders.length === 0) {
-    return (
-      <View style={styles.noOrdersContainer}>
-        <Text style={styles.noOrdersText}>No se encontraron órdenes.</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.searchInput}
-        placeholder="Buscar por usuario o producto..."
+        placeholder="Buscar por ID, usuario o producto..."
         value={searchQuery}
         onChangeText={handleSearch}
       />
-      <FlatList
-        data={filteredOrders}
-        renderItem={({ item }) => <OrderCard order={item} />}
-        keyExtractor={(item) => item._id}
-      />
+      {filteredOrders.length === 0 ? (
+        <View style={styles.noOrdersContainer}>
+          <Text style={styles.noOrdersText}>No se encontraron órdenes.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredOrders}
+          renderItem={({ item }) => <OrderCard order={item} />}
+          keyExtractor={(item) => item._id}
+        />
+      )}
     </View>
   );
 };

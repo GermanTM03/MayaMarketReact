@@ -5,16 +5,17 @@ import ProductList from '../../components/products/ProductList';
 import ProductModal from '../../components/products/ProductModal';
 import { Product } from '../../models/Product';
 
-const Home = forwardRef((_, ref) => {
+const Home = forwardRef(({ navigation }: { navigation: any }, ref) => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [quantity, setQuantity] = useState<number>(1);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // Inicializar como string vacío
 
   // Exponer métodos al padre usando ref
   useImperativeHandle(ref, () => ({
     reloadProducts: () => {
       console.log('Recargando lista de productos...');
-      // Aquí puedes agregar la lógica para recargar la lista de productos si es necesario
+      // Lógica para recargar productos (puedes agregarla según sea necesario)
     },
   }));
 
@@ -34,11 +35,25 @@ const Home = forwardRef((_, ref) => {
     closeModal();
   };
 
+  // Navegar al Home al hacer clic en el ícono de Home en el TopBar
+  const navigateToHome = () => {
+    navigation.navigate('Home');
+  };
+
   return (
     <View style={styles.container}>
-      <TopBar />
+      {/* TopBar con búsqueda */}
+      <TopBar
+        onSearch={(query) => setSearchQuery(query)} // Actualiza el estado de búsqueda
+        navigateToHome={navigateToHome} // Navegar al Home
+      />
+
       {/* Lista de productos */}
-      <ProductList onViewDetails={handleViewDetails} />
+      <ProductList
+        onViewDetails={handleViewDetails}
+        navigation={navigation}
+        searchQuery={searchQuery} // Filtrado por búsqueda
+      />
 
       {/* Modal para mostrar detalles del producto */}
       {selectedProduct && (
