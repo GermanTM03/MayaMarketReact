@@ -49,8 +49,10 @@ const Register = () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
-          // Redirige automáticamente si hay un userId
-          navigation.navigate('Home');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
         }
       } catch (error) {
         console.error('Error al verificar el userId almacenado:', error);

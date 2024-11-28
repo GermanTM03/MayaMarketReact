@@ -18,20 +18,38 @@ const Cart = forwardRef((_, ref) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#E53935" />
-        <Text style={styles.loadingText}>Cargando...</Text>
+      <View style={styles.container}>
+        <TopBar />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E53935" />
+          <Text style={styles.loadingText}>Cargando...</Text>
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-        <Button mode="contained" onPress={loadCart}>
-          Reintentar
-        </Button>
+      <View style={styles.container}>
+        <TopBar />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button mode="contained" onPress={loadCart}>
+            Reintentar
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  // Mostrar mensaje si el carrito está vacío
+  if (!cart?.items || cart.items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <TopBar />
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Explora para empezar a comprar</Text>
+        </View>
       </View>
     );
   }
@@ -42,7 +60,7 @@ const Cart = forwardRef((_, ref) => {
       <View style={styles.content}>
         <Text style={styles.headerText}>Mi Carrito</Text>
         <FlatList
-          data={cart?.items}
+          data={cart.items}
           keyExtractor={(item) => item.productId._id}
           renderItem={({ item }) => (
             <View style={styles.cartItem}>
@@ -71,7 +89,7 @@ const Cart = forwardRef((_, ref) => {
           )}
         />
         <Text style={styles.totalText}>
-          Total: ${cart?.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
+          Total: ${cart.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
         </Text>
         <View style={styles.footerButtons}>
           <Button
@@ -186,6 +204,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#E53935',
     marginBottom: 10,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#6e6e6e',
   },
 });
 

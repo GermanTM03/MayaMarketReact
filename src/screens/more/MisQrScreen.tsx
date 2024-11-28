@@ -1,277 +1,216 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Alert,
-  Image,
-  Modal,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import { Title, Paragraph, IconButton } from 'react-native-paper';
+import React, { useEffect, useState,useImperativeHandle, forwardRef  } from 'react';
+import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import QRCode from 'react-native-qrcode-svg';
+import { Ionicons } from '@expo/vector-icons';
 
-interface Product {
+type Order = {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  productId: {
+    _id: string;
+  };
+  quantity: number;
+  status: 'pendiente' | 'completado' | 'almacenado';
+  createdAt: string;
+  updatedAt: string;
+};
+
+type Product = {
   _id: string;
   name: string;
-  price: number;
-  quantity: number;
   image_1: string;
   image_2: string;
   image_3: string;
-}
+  price: number;
+};
 
-const MisProductosScreen: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [selectedProductImages, setSelectedProductImages] = useState<string[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  const [userId, setUserId] = useState<string | null>(null);
+type OrderWithProduct = Order & { product?: Product | null };
 
-  useEffect(() => {
-    const fetchUserIdAndProducts = async () => {
-      try {
-        const storedUserId = await AsyncStorage.getItem('userId');
-        if (!storedUserId) {
-          console.error('No se encontró el userId almacenado.');
+const defaultImage = 'https://via.placeholder.com/150';
+
+const statusStyles: Record<Order['status'], { color: string }> = {
+  pendiente: { color: 'orange' },
+  completado: { color: 'green' },
+  almacenado: { color: 'blue' },
+};
+
+const Orders = forwardRef((_, ref) => {
+  const [orders, setOrders] = useState<OrderWithProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+
+  useImperativeHandle(ref, () => ({
+    reloadOrders: () => {
+      console.log('Recargando órdenes...');
+      fetchOrders();
+    },
+  }));
+
+  const fetchOrders = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.error('ID de usuario no encontrado en AsyncStorage');
+        return;
+      }
+  
+      const response = await fetch(`https://mayaapi.onrender.com/api/orders/user/${userId}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Manejo específico para el error 404
+          setOrders([]);
+          setLoading(false);
+          console.warn('Opa no tienes órdenes, empieza a comprar para ver tus pedidos');
           return;
         }
-        setUserId(storedUserId);
-        fetchProducts(storedUserId);
-      } catch (error) {
-        console.error('Error al recuperar el userId:', error);
+        throw new Error(`Error al obtener órdenes: ${response.status}`);
       }
-    };
-
-    fetchUserIdAndProducts();
-  }, []);
-
-  const fetchProducts = async (userId: string) => {
-    const apiUrl = `https://mayaapi.onrender.com/api/products/user/${userId}`;
-    try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      setProducts(data);
+  
+      const ordersData: Order[] = await response.json();
+  
+      const ordersWithProducts = await Promise.all(
+        ordersData.map(async (order) => {
+          const productId = order.productId._id;
+          try {
+            const productResponse = await fetch(`https://mayaapi.onrender.com/api/products/${productId}`);
+            if (productResponse.ok) {
+              const product: Product = await productResponse.json();
+              return { ...order, product };
+            } else {
+              return { ...order, product: null };
+            }
+          } catch (error) {
+            console.error(`Error al obtener el producto ${productId}:`, error);
+            return { ...order, product: null };
+          }
+        })
+      );
+  
+      setOrders(ordersWithProducts);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Error al obtener las órdenes:', error);
     } finally {
       setLoading(false);
     }
   };
+  
 
-  const deleteProduct = async (id: string) => {
-    const apiUrl = `https://mayaapi.onrender.com/api/products/${id}`;
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        setProducts((prevProducts) => prevProducts.filter((product) => product._id !== id));
-        Alert.alert('Éxito', 'Producto eliminado exitosamente.');
-      } else {
-        Alert.alert('Error', 'No se pudo eliminar el producto.');
-      }
-    } catch (error) {
-      console.error('Error al eliminar producto:', error);
-      Alert.alert('Error', 'Ocurrió un problema al eliminar el producto.');
-    }
-  };
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
-  const handleDelete = (id: string) => {
-    Alert.alert(
-      'Confirmación',
-      '¿Estás seguro de eliminar este producto?',
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-        },
-        {
-          text: 'Eliminar',
-          onPress: () => deleteProduct(id),
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  const openModal = (images: string[]) => {
-    setSelectedProductImages(images);
-    setCurrentImageIndex(0); // Comenzar desde la primera imagen
-    setModalVisible(true);
-  };
-
-  const showNextImage = () => {
-    if (currentImageIndex < selectedProductImages.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-    }
-  };
-
-  const showPreviousImage = () => {
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-    }
-  };
-
-  const renderProduct = ({ item }: { item: Product }) => (
-    <View style={styles.listItem}>
-      <TouchableOpacity onPress={() => openModal([item.image_1, item.image_2, item.image_3])}>
-        <Image source={{ uri: item.image_1 }} style={styles.productImage} />
-      </TouchableOpacity>
-      <View style={styles.productInfo}>
-        <Title>{item.name}</Title>
-        <Paragraph>Precio: ${item.price}</Paragraph>
-        <Paragraph>Cantidad: {item.quantity}</Paragraph>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Cargando órdenes...</Text>
       </View>
-      <IconButton
-        icon="delete"
-        iconColor="red"
-        onPress={() => handleDelete(item._id)}
-        style={styles.deleteButton}
-      />
-    </View>
-  );
+    );
+  }
+  if (orders.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.noOrdersText}>Opa no tienes órdenes, empieza a comprar para ver tus pedidos.</Text>
+        </View>
+      </View>
+    );
+  }
+  
 
   return (
     <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator animating={true} size="large" />
-      ) : (
+      <View style={styles.content}>
+        <Text style={styles.title}>¡Estas son tus ordenes!</Text>
         <FlatList
-          data={products}
-          renderItem={renderProduct}
+          data={orders}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
-        />
-      )}
-
-      {/* Modal para imágenes */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {selectedProductImages.length > 0 && (
-              <Image
-                source={{ uri: selectedProductImages[currentImageIndex] }}
-                style={styles.modalImage}
-              />
-            )}
-            <View style={styles.navigationButtons}>
-              <TouchableOpacity
-                onPress={showPreviousImage}
-                disabled={currentImageIndex === 0}
-              >
-                <Text style={[styles.navButton, currentImageIndex === 0 && styles.disabledNav]}>
-                  Anterior
-                </Text>
+          renderItem={({ item }) => (
+            <View style={styles.productCard}>
+              {/* Imagen */}
+              <TouchableOpacity onPress={() => setSelectedImage(item.product?.image_1 || defaultImage)}>
+                <Image source={{ uri: item.product?.image_1 || defaultImage }} style={styles.productImage} />
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={showNextImage}
-                disabled={currentImageIndex === selectedProductImages.length - 1}
-              >
-                <Text
-                  style={[
-                    styles.navButton,
-                    currentImageIndex === selectedProductImages.length - 1 && styles.disabledNav,
-                  ]}
-                >
-                  Siguiente
+
+              {/* Información */}
+              <View style={styles.productInfo}>
+                <Text style={[styles.productStatus, statusStyles[item.status]]}>{item.status}</Text>
+                <Text style={styles.productName}>{item.product?.name || 'Producto sin nombre'}</Text>
+                <Text style={styles.productQuantity}>Cantidad: {item.quantity}</Text>
+                <Text style={styles.productPrice}>
+                  Precio: ${item.product?.price ? item.product.price.toFixed(2) : 'N/A'}
                 </Text>
+                <Text style={styles.productUser}>Usuario: {item.userId.name}</Text>
+              </View>
+
+              {/* Ícono de QR */}
+              <TouchableOpacity onPress={() => setSelectedOrderId(item._id)} style={styles.qrIcon}>
+                <Ionicons name="qr-code" size={30} color="#000" />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          )}
+        />
+      </View>
+
+      {/* Modal para imágenes */}
+      {selectedImage && (
+        <Modal transparent={true} visible={!!selectedImage} animationType="fade">
+          <TouchableOpacity style={styles.modalContainer} onPress={() => setSelectedImage(null)}>
+            <View style={styles.modalContent}>
+              <Image source={{ uri: selectedImage }} style={styles.fullscreenImage} />
+              <TouchableOpacity onPress={() => setSelectedImage(null)} style={styles.modalClose}>
+                <Text style={styles.modalCloseText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      {/* Modal para QR */}
+      {selectedOrderId && (
+        <Modal transparent={true} visible={!!selectedOrderId} animationType="fade">
+          <TouchableOpacity style={styles.modalContainer} onPress={() => setSelectedOrderId(null)}>
+            <View style={styles.modalContent}>
+              <QRCode value={selectedOrderId} size={200} />
+              <TouchableOpacity onPress={() => setSelectedOrderId(null)} style={styles.modalClose}>
+                <Text style={styles.modalCloseText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  listContainer: {
-    padding: 16,
-  },
-  listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  productImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 16,
-  },
-  productInfo: {
-    flex: 1,
-  },
-  deleteButton: {
-    marginLeft: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    width: '90%',
-  },
-  modalImage: {
-    width: 250,
-    height: 250,
-    marginBottom: 16,
-    borderRadius: 8,
-  },
-  navigationButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 16,
-  },
-  navButton: {
-    color: 'blue',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  disabledNav: {
-    color: 'gray',
-  },
-  closeButton: {
-    backgroundColor: 'red',
-    padding: 10,
-    borderRadius: 8,
-    alignSelf: 'center',
-    marginTop: 16,
-  },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
 });
 
-export default MisProductosScreen;
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  content: { flex: 1, padding: 20 },
+  title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
+  productCard: { flexDirection: 'row', marginBottom: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 10, alignItems: 'center' },
+  productImage: { width: 80, height: 80, borderRadius: 8, marginRight: 10 },
+  productInfo: { flex: 1 },
+  productName: { fontSize: 16, fontWeight: 'bold' },
+  productQuantity: { fontSize: 14, color: '#555' },
+  productPrice: { fontSize: 14, color: '#000' },
+  productUser: { fontSize: 14, color: '#666' },
+  productStatus: { fontSize: 14, fontWeight: 'bold', marginBottom: 10 },
+  qrIcon: { padding: 10 },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  modalContent: { backgroundColor: '#fff', borderRadius: 10, padding: 20, alignItems: 'center' },
+  modalClose: { marginTop: 20 },
+  modalCloseText: { color: '#000', fontSize: 16 },
+  fullscreenImage: { width: 300, height: 300, resizeMode: 'contain' },
+  noOrdersText: { textAlign: 'center', fontSize: 16, color: '#555', marginTop: 20 },
+
+});
+
+export default Orders;

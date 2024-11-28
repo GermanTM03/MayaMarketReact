@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import UserProfile from '../../../components/usuario/UserProfile';
 import EditProfileModal from '../../../components/usuario/EditarProfileModal';
 import ProfileViewModel, { UserModel } from '../../viewmodels/ProfileViewModel';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -62,13 +63,23 @@ const Profile = () => {
 
   const handleLogout = async () => {
     try {
+      // Llamar a la función de logout en el ViewModel
       await ProfileViewModel.logout();
+  
+      // Limpiar datos almacenados localmente (ejemplo con AsyncStorage)
+      await AsyncStorage.removeItem('userId'); // Eliminar el userId almacenado
+  
+      // Mostrar mensaje de éxito
       Alert.alert('Sesión cerrada', 'Has cerrado sesión exitosamente.');
+  
+      // Navegar a la pantalla de bienvenida
       navigation.navigate('Welcome');
     } catch (error) {
       Alert.alert('Error', error instanceof Error ? error.message : 'Ocurrió un error');
     }
   };
+  
+  
 
   const handleEdit = () => {
     setModalVisible(true);

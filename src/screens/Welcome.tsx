@@ -131,12 +131,7 @@ const Welcome = () => {
           >
             <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: '#282948' }]}
-            onPress={() => navigation.navigate('Home')}
-          >
-            <Text style={styles.buttonText}>Home</Text>
-          </TouchableOpacity>
+   
         </View>
       )}
 

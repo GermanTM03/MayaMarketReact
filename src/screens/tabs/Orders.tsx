@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useImperativeHandle, forwardRef  } from 'react';
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopBar from '../../../components/visual/Topbar';
@@ -46,7 +46,6 @@ const Orders = forwardRef((_, ref) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-
   useImperativeHandle(ref, () => ({
     reloadOrders: () => {
       console.log('Recargando órdenes...');
@@ -61,21 +60,20 @@ const Orders = forwardRef((_, ref) => {
         console.error('ID de usuario no encontrado en AsyncStorage');
         return;
       }
-  
+
       const response = await fetch(`https://mayaapi.onrender.com/api/orders/user/${userId}`);
       if (!response.ok) {
         if (response.status === 404) {
-          // Manejo específico para el error 404
           setOrders([]);
           setLoading(false);
-          console.warn('Opa no tienes órdenes, empieza a comprar para ver tus pedidos');
+          console.warn('No tienes órdenes aún.');
           return;
         }
         throw new Error(`Error al obtener órdenes: ${response.status}`);
       }
-  
+
       const ordersData: Order[] = await response.json();
-  
+
       const ordersWithProducts = await Promise.all(
         ordersData.map(async (order) => {
           const productId = order.productId._id;
@@ -93,7 +91,7 @@ const Orders = forwardRef((_, ref) => {
           }
         })
       );
-  
+
       setOrders(ordersWithProducts);
     } catch (error) {
       console.error('Error al obtener las órdenes:', error);
@@ -101,7 +99,6 @@ const Orders = forwardRef((_, ref) => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchOrders();
@@ -115,23 +112,23 @@ const Orders = forwardRef((_, ref) => {
       </View>
     );
   }
+
   if (orders.length === 0) {
     return (
       <View style={styles.container}>
         <TopBar />
         <View style={styles.content}>
-          <Text style={styles.noOrdersText}>Opa no tienes órdenes, empieza a comprar para ver tus pedidos.</Text>
+          <Text style={styles.noOrdersText}>Empieza a completar compras para ver tus órdenes.</Text>
         </View>
       </View>
     );
   }
-  
 
   return (
     <View style={styles.container}>
       <TopBar />
       <View style={styles.content}>
-        <Text style={styles.title}>¡Estas son tus ordenes!</Text>
+        <Text style={styles.title}>¡Estas son tus órdenes!</Text>
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}
@@ -213,7 +210,6 @@ const styles = StyleSheet.create({
   modalCloseText: { color: '#000', fontSize: 16 },
   fullscreenImage: { width: 300, height: 300, resizeMode: 'contain' },
   noOrdersText: { textAlign: 'center', fontSize: 16, color: '#555', marginTop: 20 },
-
 });
 
 export default Orders;

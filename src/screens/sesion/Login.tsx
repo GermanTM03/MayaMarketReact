@@ -25,6 +25,8 @@ type RootStackParamList = {
   Home: undefined;
   Login: undefined;
   Register: undefined;
+  Almacen: undefined;
+
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -46,8 +48,10 @@ const Login = () => {
         const storedUserId = await AsyncStorage.getItem('userId');
         if (storedUserId) {
           // Redirige automáticamente si hay un userId
-          navigation.navigate('Home');
-        }
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          });        }
       } catch (error) {
         console.error('Error al verificar el userId almacenado:', error);
       }
@@ -68,11 +72,28 @@ const Login = () => {
   }, []);
   const handleLogin = async () => {
     try {
-      const { name } = await LoginViewModel.login(email, password);
+      // Llama a la función de login en tu ViewModel
+      const { id, name, role } = await LoginViewModel.login(email, password);
+  
+      // Almacena los datos del usuario en AsyncStorage
+      await AsyncStorage.setItem('userId', id);
+      await AsyncStorage.setItem('userRole', role);
+  
+  if (role === 'Administrador') {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Almacen' }],
+      });
+    } else {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
+    }
+  
+      // Muestra un mensaje de bienvenida
       Alert.alert('Bienvenido', `Hola, ${name}`);
-      navigation.navigate('Home');
     } catch (error) {
-      // Verificar que el error sea del tipo esperado
       if (error instanceof Error) {
         Alert.alert('Error', error.message); // Usa el mensaje del error
       } else {
@@ -80,6 +101,7 @@ const Login = () => {
       }
     }
   };
+  
   
 
   return (
