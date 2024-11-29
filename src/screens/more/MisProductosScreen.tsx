@@ -55,6 +55,11 @@ const MisProductosScreen: React.FC = () => {
       const response = await fetch(apiUrl);
       const data = await response.json();
       setProducts(data);
+  
+      // Verificar si no hay productos y mostrar un mensaje en la consola
+      if (data.length === 0) {
+        console.log('No hay productos disponibles para este usuario.');
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -118,6 +123,7 @@ const MisProductosScreen: React.FC = () => {
 
   const renderProduct = ({ item }: { item: Product }) => (
     <View style={styles.listItem}>
+      
       <TouchableOpacity onPress={() => openModal([item.image_1, item.image_2, item.image_3])}>
         <Image source={{ uri: item.image_1 }} style={styles.productImage} />
       </TouchableOpacity>

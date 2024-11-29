@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalada esta dependencia
+import { Ionicons } from '@expo/vector-icons';
 import OrderCard from './OrderCart';
 import FloatingMenu from './FloatingMenu';
 
@@ -23,7 +23,6 @@ interface Order {
 
 const ITEMS_PER_PAGE = 5;
 
-
 const OrderList = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -33,9 +32,50 @@ const OrderList = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
 
+  const fetchOrders = async () => {
+    try {
+      setLoading(true); // Mostrar indicador de carga
+      const response = await fetch('https://mayaapi.onrender.com/api/orders');
+      if (!response.ok) {
+        throw new Error(`Error al obtener órdenes: ${response.status}`);
+      }
+      const data: Order[] = await response.json();
+      
+      // Actualiza tanto las órdenes principales como las filtradas
+      setOrders(data); // Guarda todas las órdenes
+      setFilteredOrders(data); // Restablece filtro
+      setVisibleOrders(data.slice(0, ITEMS_PER_PAGE)); // Muestra primeras órdenes
+      setCurrentPage(1); // Reinicia la paginación
+    } catch (err) {
+      console.error('Error al cargar órdenes:', err);
+    } finally {
+      setLoading(false); // Detiene indicador de carga
+    }
+  };
+  
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    const lowerQuery = query.toLowerCase();
+    const filtered = orders.filter((order) => {
+      return (
+        order._id.toLowerCase().includes(lowerQuery) ||
+        order.userId.name.toLowerCase().includes(lowerQuery) ||
+        order.productId.name?.toLowerCase().includes(lowerQuery)
+      );
+    });
+
+    setFilteredOrders(filtered);
+    setVisibleOrders(filtered.slice(0, ITEMS_PER_PAGE));
+    setCurrentPage(1);
+  };
 
   const handleMenuSelect = (option: string) => {
-    const normalizedOption = option.toLowerCase(); // Normaliza la opción seleccionada
+    const normalizedOption = option.toLowerCase();
     switch (normalizedOption) {
       case 'pendiente':
         const pendingOrders = orders.filter((order) => order.status.toLowerCase() === 'pendiente');
@@ -50,8 +90,8 @@ const OrderList = () => {
         setCurrentPage(1);
         break;
       case 'mostrar todos':
-        setFilteredOrders(orders); // Restablece todas las órdenes
-        setVisibleOrders(orders.slice(0, ITEMS_PER_PAGE)); // Muestra las primeras órdenes
+        setFilteredOrders(orders);
+        setVisibleOrders(orders.slice(0, ITEMS_PER_PAGE));
         setCurrentPage(1);
         break;
       case 'cerrar sesión':
@@ -62,44 +102,9 @@ const OrderList = () => {
         break;
     }
   };
-  
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('https://mayaapi.onrender.com/api/orders');
-      if (!response.ok) {
-        throw new Error(`Error al obtener órdenes: ${response.status}`);
-      }
-      const data: Order[] = await response.json();
-      setOrders(data);
-      setFilteredOrders(data);
-      setVisibleOrders(data.slice(0, ITEMS_PER_PAGE));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    const lowerQuery = query.toLowerCase();
-    const filtered = orders.filter((order) => {
-      return (
-        order._id.toLowerCase().includes(lowerQuery) || // Filtrar por ID de la orden
-        order.userId.name.toLowerCase().includes(lowerQuery) || // Filtrar por nombre de usuario
-        order.productId.name?.toLowerCase().includes(lowerQuery) // Filtrar por nombre del producto
-      );
-    });
-
-    setFilteredOrders(filtered);
-    setVisibleOrders(filtered.slice(0, ITEMS_PER_PAGE));
-    setCurrentPage(1);
+  const onUpdate = () => {
+    fetchOrders(); // Refresca la lista cuando hay cambios
   };
 
   const loadMoreOrders = () => {
@@ -131,7 +136,6 @@ const OrderList = () => {
 
   return (
     <View style={styles.container}>
-      {/* Topbar */}
       <View style={styles.topbar}>
         <Ionicons name="search" size={20} color="#FFF" style={styles.searchIcon} />
         <TextInput
@@ -142,7 +146,6 @@ const OrderList = () => {
           onChangeText={handleSearch}
         />
       </View>
-      {/* List of orders */}
       {filteredOrders.length === 0 ? (
         <View style={styles.noOrdersContainer}>
           <Text style={styles.noOrdersText}>No se encontraron órdenes.</Text>
@@ -150,7 +153,7 @@ const OrderList = () => {
       ) : (
         <FlatList
           data={visibleOrders}
-          renderItem={({ item }) => <OrderCard order={item} />}
+          renderItem={({ item }) => <OrderCard order={item} onUpdate={onUpdate} />}
           keyExtractor={(item) => item._id}
           contentContainerStyle={styles.listContainer}
           onEndReached={loadMoreOrders}
@@ -160,8 +163,7 @@ const OrderList = () => {
           }
         />
       )}
-            <FloatingMenu onSelectOption={handleMenuSelect} />
-
+      <FloatingMenu onSelectOption={handleMenuSelect} />
     </View>
   );
 };
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007BFF', // Fondo azul
+    backgroundColor: '#007BFF',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomLeftRadius: 12,
@@ -183,13 +185,13 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     marginRight: 8,
-    color: '#FFF', // Icono blanco
+    color: '#FFF',
   },
   searchInput: {
     flex: 1,
     height: 40,
     fontSize: 16,
-    color: '#FFF', // Texto blanco
+    color: '#FFF',
   },
   listContainer: {
     paddingHorizontal: 16,

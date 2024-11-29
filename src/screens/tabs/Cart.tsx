@@ -92,22 +92,22 @@ const Cart = forwardRef((_, ref) => {
           Total: ${cart.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0).toFixed(2)}
         </Text>
         <View style={styles.footerButtons}>
-          <Button
-            mode="contained"
-            style={styles.button}
-            onPress={() => clearCart()}
-          >
-            Vaciar Carrito
-          </Button>
-          <Button
-            mode="contained"
-            style={styles.button}
-            onPress={() => setShowPaymentModal(true)} // Mostrar el modal
-            color="#4CAF50"
-          >
-            Proceder al Pago
-          </Button>
-        </View>
+  <Button
+    mode="contained"
+    style={[styles.button, { backgroundColor: '#282948' }]} // Color para "Vaciar Carrito"
+    onPress={() => clearCart()}
+  >
+    Vaciar Carrito
+  </Button>
+  <Button
+    mode="contained"
+    style={[styles.button, { backgroundColor: '#2F37D0' }]} // Color para "Proceder al Pago"
+    onPress={() => setShowPaymentModal(true)} // Mostrar el modal
+  >
+    Proceder al Pago
+  </Button>
+</View>
+
       </View>
 
       {/* Modal de Pago */}
@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     marginHorizontal: 5,
+    borderRadius: 4, // Reduce el redondeo para hacerlos más cuadrados
   },
   loadingContainer: {
     flex: 1,

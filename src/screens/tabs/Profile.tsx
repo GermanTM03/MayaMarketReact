@@ -17,6 +17,8 @@ type RootStackParamList = {
   MisQr: undefined;
   Ayuda: undefined;
   Configuracion: undefined;
+  Ordenes: undefined;
+  QrScanner: undefined;
 };
 
 interface MenuItem {
@@ -36,8 +38,7 @@ const Profile = () => {
   const menuItems: MenuItem[] = [
     { label: 'Vender producto', icon: 'cart-plus', route: 'Vender' },
     { label: 'Mis productos', icon: 'clipboard-list', route: 'MisProductos' },
-    { label: 'Almacén', icon: 'warehouse', route: 'Almacen' },
-    { label: 'Leer QR', icon: 'qrcode-scan', route: 'Lector' },
+    { label: 'Ordenes', icon: 'warehouse', route: 'Ordenes' },
     { label: 'Mis QR', icon: 'qrcode', route: 'MisQr' },
     { label: 'Ayuda', icon: 'help-circle', route: 'Ayuda' },
   ];

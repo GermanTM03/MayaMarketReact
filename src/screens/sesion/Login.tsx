@@ -46,16 +46,28 @@ const Login = () => {
     const checkUserLoggedIn = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          // Redirige automáticamente si hay un userId
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Home' }],
-          });        }
+        const storedUserRole = await AsyncStorage.getItem('userRole');
+
+        if (storedUserId && storedUserRole) {
+          // Redirige automáticamente según el rol del usuario
+          if (storedUserRole === 'Administrador') {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Almacen' }],
+            });
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            });
+          }
+        }
       } catch (error) {
-        console.error('Error al verificar el userId almacenado:', error);
+        console.error('Error al verificar los datos almacenados:', error);
       }
     };
+
+
 
     checkUserLoggedIn();
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
@@ -148,10 +160,10 @@ const Login = () => {
           }
           style={styles.input}
         />
+<Button mode="contained" onPress={handleLogin} style={styles.button}>
+  Iniciar Sesión
+</Button>
 
-        <Button mode="contained" onPress={handleLogin} style={styles.button}>
-          Iniciar Sesión
-        </Button>
 
         <Text style={styles.registerText}>
           ¿No tienes cuenta?{' '}
@@ -221,6 +233,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '100%',
     backgroundColor: '#272C73',
+    borderRadius: 4, // Cambia a un redondeo más leve
   },
   registerText: {
     marginTop: 15,

@@ -14,6 +14,8 @@ import MisProductosScreen from '../screens/more/MisProductosScreen';
 import MisQrScreen from '../screens/more//MisQrScreen';
 import VenderScreen from '../screens/more/VenderScreen';
 import AdministracionScreen from '../screens/AdministracionScreen';
+import Ordenes from '../screens/more/Ordenes';
+
 
 const Stack = createStackNavigator();
 
@@ -37,6 +39,7 @@ const AppNavigator = () => (
 
       <Stack.Screen name="Administracion" component={AdministracionScreen}  />
       <Stack.Screen name="Ayuda" component={AyudaScreen} />
+      <Stack.Screen name="Ordenes" component={Ordenes} />
       <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Lector" component={LectorScreen}  />
       <Stack.Screen name="MisProductos" component={MisProductosScreen}  />

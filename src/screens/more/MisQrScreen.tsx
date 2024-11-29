@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useImperativeHandle, forwardRef  } from 'react';
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, Modal, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import QRCode from 'react-native-qrcode-svg';
@@ -44,7 +44,7 @@ const Orders = forwardRef((_, ref) => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-
+  const [alertVisible, setAlertVisible] = useState(false); // Controla la visibilidad de la alerta personalizada
 
   useImperativeHandle(ref, () => ({
     reloadOrders: () => {
@@ -60,21 +60,20 @@ const Orders = forwardRef((_, ref) => {
         console.error('ID de usuario no encontrado en AsyncStorage');
         return;
       }
-  
+
       const response = await fetch(`https://mayaapi.onrender.com/api/orders/user/${userId}`);
       if (!response.ok) {
         if (response.status === 404) {
-          // Manejo específico para el error 404
           setOrders([]);
           setLoading(false);
-          console.warn('Opa no tienes órdenes, empieza a comprar para ver tus pedidos');
+          setAlertVisible(true); // Muestra la alerta personalizada
           return;
         }
         throw new Error(`Error al obtener órdenes: ${response.status}`);
       }
-  
+
       const ordersData: Order[] = await response.json();
-  
+
       const ordersWithProducts = await Promise.all(
         ordersData.map(async (order) => {
           const productId = order.productId._id;
@@ -92,7 +91,7 @@ const Orders = forwardRef((_, ref) => {
           }
         })
       );
-  
+
       setOrders(ordersWithProducts);
     } catch (error) {
       console.error('Error al obtener las órdenes:', error);
@@ -100,7 +99,6 @@ const Orders = forwardRef((_, ref) => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchOrders();
@@ -114,49 +112,37 @@ const Orders = forwardRef((_, ref) => {
       </View>
     );
   }
-  if (orders.length === 0) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.noOrdersText}>Opa no tienes órdenes, empieza a comprar para ver tus pedidos.</Text>
-        </View>
-      </View>
-    );
-  }
-  
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>¡Estas son tus ordenes!</Text>
-        <FlatList
-          data={orders}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.productCard}>
-              {/* Imagen */}
-              <TouchableOpacity onPress={() => setSelectedImage(item.product?.image_1 || defaultImage)}>
-                <Image source={{ uri: item.product?.image_1 || defaultImage }} style={styles.productImage} />
-              </TouchableOpacity>
-
-              {/* Información */}
-              <View style={styles.productInfo}>
-                <Text style={[styles.productStatus, statusStyles[item.status]]}>{item.status}</Text>
-                <Text style={styles.productName}>{item.product?.name || 'Producto sin nombre'}</Text>
-                <Text style={styles.productQuantity}>Cantidad: {item.quantity}</Text>
-                <Text style={styles.productPrice}>
-                  Precio: ${item.product?.price ? item.product.price.toFixed(2) : 'N/A'}
-                </Text>
-                <Text style={styles.productUser}>Usuario: {item.userId.name}</Text>
+        {orders.length === 0 ? (
+          <Text style={styles.noOrdersText}>Opa no tienes órdenes, empieza a comprar para ver tus pedidos.</Text>
+        ) : (
+          <FlatList
+            data={orders}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => (
+              <View style={styles.productCard}>
+                <TouchableOpacity onPress={() => setSelectedImage(item.product?.image_1 || defaultImage)}>
+                  <Image source={{ uri: item.product?.image_1 || defaultImage }} style={styles.productImage} />
+                </TouchableOpacity>
+                <View style={styles.productInfo}>
+                  <Text style={[styles.productStatus, statusStyles[item.status]]}>{item.status}</Text>
+                  <Text style={styles.productName}>{item.product?.name || 'Producto sin nombre'}</Text>
+                  <Text style={styles.productQuantity}>Cantidad: {item.quantity}</Text>
+                  <Text style={styles.productPrice}>
+                    Precio: ${item.product?.price ? item.product.price.toFixed(2) : 'N/A'}
+                  </Text>
+                  <Text style={styles.productUser}>Usuario: {item.userId.name}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedOrderId(item._id)} style={styles.qrIcon}>
+                  <Ionicons name="qr-code" size={30} color="#000" />
+                </TouchableOpacity>
               </View>
-
-              {/* Ícono de QR */}
-              <TouchableOpacity onPress={() => setSelectedOrderId(item._id)} style={styles.qrIcon}>
-                <Ionicons name="qr-code" size={30} color="#000" />
-              </TouchableOpacity>
-            </View>
-          )}
-        />
+            )}
+          />
+        )}
       </View>
 
       {/* Modal para imágenes */}
@@ -186,6 +172,21 @@ const Orders = forwardRef((_, ref) => {
           </TouchableOpacity>
         </Modal>
       )}
+
+      {/* Modal para alerta personalizada */}
+      <Modal visible={alertVisible} transparent={true} animationType="slide">
+        <View style={styles.alertContainer}>
+          <View style={styles.alertBox}>
+            <Text style={styles.alertTitle}>¡Aviso!</Text>
+            <Text style={styles.alertMessage}>
+              No tienes órdenes disponibles. ¡Empieza a comprar para disfrutar de nuestros productos!
+            </Text>
+            <TouchableOpacity onPress={() => setAlertVisible(false)} style={styles.alertButton}>
+              <Text style={styles.alertButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 });
@@ -194,7 +195,6 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { flex: 1, padding: 20 },
-  title: { fontSize: 20, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
   productCard: { flexDirection: 'row', marginBottom: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 10, alignItems: 'center' },
   productImage: { width: 80, height: 80, borderRadius: 8, marginRight: 10 },
   productInfo: { flex: 1 },
@@ -210,7 +210,12 @@ const styles = StyleSheet.create({
   modalCloseText: { color: '#000', fontSize: 16 },
   fullscreenImage: { width: 300, height: 300, resizeMode: 'contain' },
   noOrdersText: { textAlign: 'center', fontSize: 16, color: '#555', marginTop: 20 },
-
+  alertContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  alertBox: { backgroundColor: '#fff', padding: 20, borderRadius: 10, alignItems: 'center', width: '80%' },
+  alertTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 10 },
+  alertMessage: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 20 },
+  alertButton: { backgroundColor: '#007BFF', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 5 },
+  alertButtonText: { color: '#fff', fontSize: 16 },
 });
 
 export default Orders;

@@ -23,6 +23,7 @@ type RootStackParamList = {
   Welcome: undefined;
   Home: undefined;
   Login: undefined;
+  Almacen : undefined;
   Register: undefined;
 };
 
@@ -48,17 +49,26 @@ const Register = () => {
     const checkUserLoggedIn = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('userId');
-        if (storedUserId) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          });
+        const storedUserRole = await AsyncStorage.getItem('userRole');
+
+        if (storedUserId && storedUserRole) {
+          // Redirige automáticamente según el rol del usuario
+          if (storedUserRole === 'Administrador') {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Almacen' }],
+            });
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Home' }],
+            });
+          }
         }
       } catch (error) {
-        console.error('Error al verificar el userId almacenado:', error);
+        console.error('Error al verificar los datos almacenados:', error);
       }
     };
-
     checkUserLoggedIn();
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
@@ -113,7 +123,7 @@ const Register = () => {
       });
 
       console.log('Registro exitoso:', response.data);
-      navigation.navigate('Home');
+      navigation.navigate('Login');
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error('Error al registrarse:', error.response?.data || error.message);
@@ -311,6 +321,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '100%',
     backgroundColor: '#272C73',
+    borderRadius: 4, // Cambia a un redondeo más leve
   },
   loginText: {
     marginTop: 15,

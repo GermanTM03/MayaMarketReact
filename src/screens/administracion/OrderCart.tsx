@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Card, Divider } from 'react-native-paper';
-import OrderDetailModal from './OrderDetailModal'; // Asegúrate de importar el modal
+import OrderDetailModal from './OrderDetailModal';
 
 interface OrderCardProps {
   order: {
@@ -11,12 +11,12 @@ interface OrderCardProps {
     quantity: number;
     status: string;
   };
+  onUpdate: () => void; // Nueva prop
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdate }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Mapa de estilos por estado
   const statusStyles: Record<string, any> = {
     pendiente: styles.pendiente,
     almacenado: styles.almacenado,
@@ -62,6 +62,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order }) => {
       <OrderDetailModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
+        onUpdate={onUpdate} // Pasa la función onUpdate
         order={order}
       />
     </>

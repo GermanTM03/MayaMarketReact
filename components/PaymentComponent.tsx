@@ -135,9 +135,14 @@ const PaymentComponent = ({ visible, onClose }: { visible: boolean; onClose: () 
             </Button>
           </>
         )}
-        <Button mode="text" onPress={onClose} style={styles.closeButton}>
-          Cerrar
-        </Button>
+<Button 
+  mode="text" 
+  onPress={onClose} 
+  style={styles.closeButton} 
+  labelStyle={styles.closeButtonText}>
+  Cerrar
+</Button>
+
       </View>
     </Modal>
   );
@@ -199,6 +204,16 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 20,
     backgroundColor: '#272C73',
+    borderRadius: 4, // Redondeo bajo para que sean casi cuadrados
+  },
+  closeButton: {
+    marginTop: 10,
+    backgroundColor: '#E53935',
+    borderRadius: 4,
+  },
+  closeButtonText: {
+    color: '#FFFFFF', // Cambia el color del texto a blanco
+    fontSize: 16, // Opcional: tamaño de fuente
   },
   splashContainer: {
     flex: 1,
@@ -212,10 +227,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#272C73',
   },
-  closeButton: {
-    marginTop: 10,
-    backgroundColor: '#E53935',
-  },
+
 });
 
 export default PaymentComponent;
