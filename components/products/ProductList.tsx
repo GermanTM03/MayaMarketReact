@@ -34,8 +34,10 @@ const ProductList: React.FC<ProductListProps> = ({ onViewDetails, navigation, se
       }
 
       const data: Product[] = await response.json();
-      const filteredProducts = data.filter((product) => product.userId !== storedUserId);
-
+      const filteredProducts = data.filter(
+        (product) => product.userId !== storedUserId && product.stock > 0
+      );
+  
       setProducts(filteredProducts);
       setFilteredProducts(filteredProducts);
       setVisibleProducts(filteredProducts.slice(0, itemsPerPage));
