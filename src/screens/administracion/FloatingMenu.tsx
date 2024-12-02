@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import QRScanner from './QRScanner'; // Importa el componente QRScanner
 
 // Define las rutas
 type RootStackParamList = {
@@ -21,7 +22,8 @@ type IoniconName =
   | 'time-outline'
   | 'archive-outline'
   | 'list-outline'
-  | 'log-out-outline';
+  | 'log-out-outline'
+  | 'qr-code-outline';
 
 interface FloatingMenuProps {
   onSelectOption: (option: string) => void;
@@ -29,31 +31,24 @@ interface FloatingMenuProps {
 
 const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption }) => {
   const [isVisible, setIsVisible] = useState(false); // Controla la visibilidad del menú
+  const [isModalVisible, setIsModalVisible] = useState(false); // Controla la visibilidad del modal
   const navigation = useNavigation<NavigationProp>(); // Especifica el tipo de navegación
 
   const options: { label: string; icon: IoniconName }[] = [
     { label: 'Pendiente', icon: 'time-outline' },
     { label: 'Almacenado', icon: 'archive-outline' },
     { label: 'Mostrar todos', icon: 'list-outline' },
+    { label: 'Lector QR', icon: 'qr-code-outline' },
     { label: 'Cerrar sesión', icon: 'log-out-outline' },
   ];
 
   const handleLogout = async () => {
     try {
-      // Elimina las claves específicas de AsyncStorage
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('userRole');
-
-      // Muestra una alerta de confirmación
-      Alert.alert('Sesión cerrada', 'Se ha cerrado tu sesión correctamente.', [
-        {
-          text: 'Aceptar',
-          onPress: () => navigation.navigate('Welcome'), // Redirige a Welcome
-        },
-      ]);
+      navigation.navigate('Welcome');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      Alert.alert('Error', 'No se pudo cerrar la sesión.');
     }
   };
 
@@ -75,10 +70,11 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption }) => {
               key={index}
               style={styles.menuItem}
               onPress={() => {
-                setIsVisible(false); // Oculta el menú al seleccionar una opción
-
+                setIsVisible(false);
                 if (option.label === 'Cerrar sesión') {
-                  handleLogout(); // Llama a la función de cerrar sesión
+                  handleLogout();
+                } else if (option.label === 'Lector QR') {
+                  setIsModalVisible(true); // Abre el modal
                 } else {
                   onSelectOption(option.label.toLowerCase());
                 }
@@ -90,6 +86,15 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption }) => {
           ))}
         </View>
       )}
+
+      {/* Modal del lector QR */}
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)} // Cierra el modal al tocar fuera
+      >
+        <QRScanner />
+      </Modal>
     </View>
   );
 };
@@ -108,10 +113,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   menu: {
     backgroundColor: '#FFF',
@@ -120,10 +121,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginTop: 10,
     elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   menuItem: {
     flexDirection: 'row',

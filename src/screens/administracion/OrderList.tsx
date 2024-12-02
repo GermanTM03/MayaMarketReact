@@ -6,7 +6,7 @@ import FloatingMenu from './FloatingMenu';
 
 interface Order {
   _id: string;
-  userId: {
+  userId: { 
     _id: string;
     name: string;
     email: string;

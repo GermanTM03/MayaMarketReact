@@ -6,7 +6,17 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "permissions": ["CAMERA"],
+    "plugins": [
+      [
+      "expo-camera",
+      {
+        "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+        "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+        "recordAudioAndroid": true
+      }
+    ]
+  ],
+
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -22,6 +32,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.germantm03.MayaMarket"
+
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,9 +41,6 @@
       "eas": {
         "projectId": "3564a1bd-6a7b-4275-8fdd-9e3de5c89473"
       }
-    },
-    "plugins": [
-      "expo-barcode-scanner"
-    ]
+    }
   }
 }
