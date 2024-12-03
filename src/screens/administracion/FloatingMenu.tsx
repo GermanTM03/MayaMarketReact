@@ -14,6 +14,10 @@ type RootStackParamList = {
   Register: undefined;
   Almacen: undefined;
 };
+interface FloatingMenuProps {
+  onSelectOption: (option: string) => void;
+  onSearchUpdate: (data: string) => void; // Nueva prop para actualizar el buscador
+}
 
 // Define el tipo de navegación
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -29,7 +33,7 @@ interface FloatingMenuProps {
   onSelectOption: (option: string) => void;
 }
 
-const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption }) => {
+const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption,onSearchUpdate  }) => {
   const [isVisible, setIsVisible] = useState(false); // Controla la visibilidad del menú
   const [isModalVisible, setIsModalVisible] = useState(false); // Controla la visibilidad del modal
   const navigation = useNavigation<NavigationProp>(); // Especifica el tipo de navegación
@@ -89,12 +93,20 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption }) => {
 
       {/* Modal del lector QR */}
       <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)} // Cierra el modal al tocar fuera
-      >
-        <QRScanner />
-      </Modal>
+  visible={isModalVisible}
+  animationType="slide"
+  onRequestClose={() => setIsModalVisible(false)} // Cierra el modal al tocar fuera
+>
+<QRScanner
+  onScanComplete={(data) => {
+    onSearchUpdate(data); // Actualiza el buscador mediante la prop
+    setIsModalVisible(false); // Cierra el lector QR
+  }}
+  onClose={() => setIsModalVisible(false)} // También cierra si se pulsa cancelar
+/>
+
+</Modal>
+
     </View>
   );
 };

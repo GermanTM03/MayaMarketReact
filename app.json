@@ -7,16 +7,8 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "plugins": [
-      [
-      "expo-camera",
-      {
-        "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-        "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
-        "recordAudioAndroid": true
-      }
-    ]
-  ],
-
+      "expo-camera"
+    ],
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -32,7 +24,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.germantm03.MayaMarket"
-
     },
     "web": {
       "favicon": "./assets/favicon.png"

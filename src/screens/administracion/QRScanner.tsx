@@ -1,13 +1,18 @@
 import { Camera, useCameraPermissions, CameraView } from 'expo-camera';
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, Alert, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Alert, TouchableOpacity } from 'react-native';
 
 type Prop = {
   type: string;
   data: string;
 };
 
-const QRScanner = () => {
+type QRScannerProps = {
+  onScanComplete: (data: string) => void;
+  onClose: () => void;
+};
+
+const QRScanner: React.FC<QRScannerProps> = ({ onScanComplete, onClose }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
@@ -16,7 +21,7 @@ const QRScanner = () => {
       const { status } = await Camera.requestCameraPermissionsAsync();
 
       if (status !== 'granted') {
-        alert('Desculpe, precisamos da permissão da câmera para fazer isso funcionar!');
+        alert('Lo sentimos, necesitamos acceso a la cámara para usar el escáner.');
       }
     })();
   }, []);
@@ -24,12 +29,15 @@ const QRScanner = () => {
   const handleBarCodeScanned = ({ type, data }: Prop) => {
     setScanned(true);
     Alert.alert(
-      `Código ${type} Scaneado`,
-      `Dados: ${data}`,
+      `Código ${type} escaneado`,
+      `ID: ${data}`,
       [
         {
-          text: 'OK',
-          onPress: () => setScanned(false),
+          text: 'Confirmar',
+          onPress: () => {
+            onScanComplete(data); // Envía el dato al buscador
+            onClose(); // Cierra el escáner
+          },
         },
       ],
       { cancelable: false }
@@ -39,9 +47,9 @@ const QRScanner = () => {
   if (!permission?.granted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.permissionText}>Permissão da câmera não concedida.</Text>
+        <Text style={styles.permissionText}>Permiso de cámara no concedido.</Text>
         <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-          <Text style={styles.permissionButtonText}>Solicitar Permissão</Text>
+          <Text style={styles.permissionButtonText}>Solicitar Permiso</Text>
         </TouchableOpacity>
       </View>
     );
@@ -61,16 +69,6 @@ const QRScanner = () => {
         </View>
         <View style={styles.layerBottom} />
       </View>
-      {scanned && (
-        <View style={styles.resultContainer}>
-          <TouchableOpacity
-            style={styles.scanAgainButton}
-            onPress={() => setScanned(false)}
-          >
-            <Text style={styles.scanAgainButtonText}>Escanear Novamente</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </CameraView>
   );
 };
@@ -130,22 +128,6 @@ const styles = StyleSheet.create({
   layerBottom: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-  },
-  resultContainer: {
-    position: 'absolute',
-    bottom: 30,
-    width: '100%',
-    alignItems: 'center',
-  },
-  scanAgainButton: {
-    backgroundColor: '#FF5722',
-    padding: 15,
-    borderRadius: 8,
-  },
-  scanAgainButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
 

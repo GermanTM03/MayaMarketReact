@@ -163,7 +163,10 @@ const OrderList = () => {
           }
         />
       )}
-      <FloatingMenu onSelectOption={handleMenuSelect} />
+<FloatingMenu
+  onSelectOption={handleMenuSelect}
+  onSearchUpdate={handleSearch} // Pasamos handleSearch al FloatingMenu
+/>
     </View>
   );
 };
