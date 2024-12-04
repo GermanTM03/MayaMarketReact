@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Product {
@@ -37,22 +38,21 @@ const Ordenes = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [currentImages, setCurrentImages] = useState<string[]>([]);
-  const [customAlertVisible, setCustomAlertVisible] = useState(false); // Estado para la alerta personalizada
+  const [showQRModal, setShowQRModal] = useState(false); // Modal para QR grande
+  const [currentQRCode, setCurrentQRCode] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) {
-          setCustomAlertVisible(true); // Muestra la alerta personalizada
           setLoading(false);
           return;
         }
 
-        const response = await fetch(`https://mayaapi.onrender.com/api/orders/user/${userId}`);
+        const response = await fetch(`https://mayaapi.onrender.com/api/orders/product/${userId}`);
         const ordersData: Order[] = await response.json();
 
         const enrichedOrders = await Promise.all(
@@ -79,7 +79,7 @@ const Ordenes = () => {
 
         setOrders(enrichedOrders);
       } catch (error) {
-        setCustomAlertVisible(true); // Muestra la alerta personalizada
+        console.error('Error fetching orders:', error);
       } finally {
         setLoading(false);
       }
@@ -90,21 +90,19 @@ const Ordenes = () => {
 
   const closeModal = () => {
     setModalVisible(false);
-    setModalContent(null);
     setCurrentImages([]);
     setCurrentImageIndex(0);
   };
 
-  const nextImage = () => {
-    if (currentImageIndex < currentImages.length - 1) {
-      setCurrentImageIndex(currentImageIndex + 1);
-    }
+  const openImageModal = (images: string[]) => {
+    setCurrentImages(images);
+    setCurrentImageIndex(0);
+    setModalVisible(true);
   };
 
-  const previousImage = () => {
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(currentImageIndex - 1);
-    }
+  const openQRModal = (qrValue: string) => {
+    setCurrentQRCode(qrValue);
+    setShowQRModal(true);
   };
 
   if (loading) {
@@ -123,7 +121,7 @@ const Ordenes = () => {
         renderItem={({ item }) => (
           <View style={styles.card}>
             <View style={styles.row}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => openImageModal(item.productId.images || [])}>
                 <View style={styles.imagesContainer}>
                   {item.productId.images?.slice(0, 1).map((image, index) => (
                     <Image key={index} source={{ uri: image }} style={styles.image} />
@@ -135,10 +133,13 @@ const Ordenes = () => {
                 <Text style={styles.text}>Nombre: {item.productId.name || 'Sin nombre'}</Text>
                 <Text style={styles.text}>Precio: ${item.productId.price}</Text>
                 <Text style={styles.text}>Cantidad: {item.quantity}</Text>
-                <TouchableOpacity>
-                  <QRCode value={item._id} size={80} />
-                </TouchableOpacity>
               </View>
+              <TouchableOpacity
+                style={styles.qrButton}
+                onPress={() => openQRModal(item._id)}
+              >
+                <Ionicons name="qr-code-outline" size={30} color="#000" />
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -147,16 +148,38 @@ const Ordenes = () => {
         }
       />
 
-      {/* Modal para la alerta personalizada */}
-      <Modal visible={customAlertVisible} transparent={true} animationType="slide">
-        <View style={styles.alertContainer}>
-          <View style={styles.alertBox}>
-            <Text style={styles.alertTitle}>¡Aviso!</Text>
-            <Text style={styles.alertMessage}>
-              No se encontraron órdenes disponibles. Empieza a vender productos para administrarte.
-            </Text>
-            <TouchableOpacity onPress={() => setCustomAlertVisible(false)} style={styles.alertButton}>
-              <Text style={styles.alertButtonText}>Aceptar</Text>
+      {/* Modal para visualizar imágenes */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Image
+            source={{ uri: currentImages[currentImageIndex] }}
+            style={styles.modalImage}
+          />
+          <View style={styles.modalButtons}>
+            <TouchableOpacity onPress={() => setCurrentImageIndex((prev) => Math.max(prev - 1, 0))}>
+              <Text style={styles.modalButton}>Anterior</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={closeModal}>
+              <Text style={styles.modalButton}>Cerrar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                setCurrentImageIndex((prev) => Math.min(prev + 1, currentImages.length - 1))
+              }
+            >
+              <Text style={styles.modalButton}>Siguiente</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para QR grande */}
+      <Modal visible={showQRModal} transparent={true} animationType="fade">
+        <View style={styles.qrModalContainer}>
+          <View style={styles.qrModalBox}>
+            <QRCode value={currentQRCode || ''} size={200} />
+            <TouchableOpacity onPress={() => setShowQRModal(false)}>
+              <Text style={styles.modalButton}>Cerrar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -204,7 +227,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    alignItems: 'center',
+    marginRight: 20,
   },
   text: {
     fontSize: 16,
@@ -217,41 +240,49 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 20,
   },
-  alertContainer: {
+  qrButton: {
+    padding: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrModalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  alertBox: {
+  qrModalBox: {
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
-    width: '80%',
     alignItems: 'center',
   },
-  alertTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
-  alertMessage: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
+  modalImage: {
+    width: 300,
+    height: 300,
     marginBottom: 20,
+    borderRadius: 10,
   },
-  alertButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
   },
-  alertButtonText: {
-    color: '#fff',
+  modalButton: {
     fontSize: 16,
+    color: '#007BFF',
+    fontWeight: 'bold',
+  },
+  disabledButton: {
+    color: '#ccc',
   },
 });
+
 
 export default Ordenes;

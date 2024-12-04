@@ -8,13 +8,12 @@ import BottomTabs from '../../components/visual/ButtomTabs'; // Aquí estará el
 
 import AlmacenScreen from '../screens/administracion/AlmacenScreen';
 import AyudaScreen from '../screens/more//AyudaScreen';
-import ConfiguracionScreen from '../screens/more/ConfiguracionScreen';
-import LectorScreen from '../screens/more/LectorScreen';
 import MisProductosScreen from '../screens/more/MisProductosScreen';
 import MisQrScreen from '../screens/more//MisQrScreen';
 import VenderScreen from '../screens/more/VenderScreen';
 import AdministracionScreen from '../screens/AdministracionScreen';
 import Ordenes from '../screens/more/Ordenes';
+import MapaScreen from '../screens/more/MapScreen';
 
 
 const Stack = createStackNavigator();
@@ -40,10 +39,10 @@ const AppNavigator = () => (
       <Stack.Screen name="Administracion" component={AdministracionScreen}  />
       <Stack.Screen name="Ayuda" component={AyudaScreen} />
       <Stack.Screen name="Ordenes" component={Ordenes} />
-      <Stack.Screen name="Configuracion" component={ConfiguracionScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Lector" component={LectorScreen}  />
+      <Stack.Screen name="Mapa" component={MapaScreen}    options={{ title: 'Punto De Entrega' }}/>
       <Stack.Screen name="MisProductos" component={MisProductosScreen}  />
-      <Stack.Screen name="MisQr" component={MisQrScreen}  />
+      <Stack.Screen name="MisQr" component={MisQrScreen}   options={{ title: 'Mis Pedidos' }} 
+ />
       <Stack.Screen name="Vender" component={VenderScreen} />
       
       <Stack.Screen name="Almacen" component={AlmacenScreen}  options={{ headerShown: false }} />

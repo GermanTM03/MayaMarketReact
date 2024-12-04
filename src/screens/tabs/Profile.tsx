@@ -16,7 +16,7 @@ type RootStackParamList = {
   Lector: undefined;
   MisQr: undefined;
   Ayuda: undefined;
-  Configuracion: undefined;
+  Mapa: undefined;
   Ordenes: undefined;
   QrScanner: undefined;
 };
@@ -39,9 +39,11 @@ const Profile = () => {
     { label: 'Vender producto', icon: 'cart-plus', route: 'Vender' },
     { label: 'Mis productos', icon: 'clipboard-list', route: 'MisProductos' },
     { label: 'Ordenes', icon: 'warehouse', route: 'Ordenes' },
-    { label: 'Mis QR', icon: 'qrcode', route: 'MisQr' },
+    { label: 'Mis Pedidos', icon: 'truck', route: 'MisQr' },
+    { label: 'Entregas', icon: 'map', route: 'Mapa' }, // Cambiado a icono de mapa
     { label: 'Ayuda', icon: 'help-circle', route: 'Ayuda' },
   ];
+  
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -123,7 +125,7 @@ const Profile = () => {
           onEdit={handleEdit}
         />
 
-        <List.Section>
+        <List.Section >
           {menuItems.map((item) => (
             <List.Item
               key={item.label}

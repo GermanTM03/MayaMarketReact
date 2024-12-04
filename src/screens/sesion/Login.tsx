@@ -8,25 +8,24 @@ import {
   ScrollView,
   Platform,
   Keyboard,
-  Alert,
+  Modal,
+  TouchableOpacity,
 } from 'react-native';
 import { TextInput, Button, Text } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import LoginViewModel from '../../viewmodels/LoginViewModel';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importa AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
-// Define las rutas
 type RootStackParamList = {
   Welcome: undefined;
   Home: undefined;
   Login: undefined;
   Register: undefined;
   Almacen: undefined;
-
 };
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -36,11 +35,11 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: 'error' | 'success' } | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [shouldNavigate, setShouldNavigate] = useState(false); // Nuevo estado para navegación pendiente
 
   const navigation = useNavigation<LoginScreenNavigationProp>();
-
-
-  
 
   useEffect(() => {
     const checkUserLoggedIn = async () => {
@@ -49,7 +48,6 @@ const Login = () => {
         const storedUserRole = await AsyncStorage.getItem('userRole');
 
         if (storedUserId && storedUserRole) {
-          // Redirige automáticamente según el rol del usuario
           if (storedUserRole === 'Administrador') {
             navigation.reset({
               index: 0,
@@ -67,8 +65,6 @@ const Login = () => {
       }
     };
 
-
-
     checkUserLoggedIn();
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
       setKeyboardVisible(true);
@@ -82,39 +78,48 @@ const Login = () => {
       keyboardDidHideListener.remove();
     };
   }, []);
+
   const handleLogin = async () => {
     try {
-      // Llama a la función de login en tu ViewModel
       const { id, name, role } = await LoginViewModel.login(email, password);
-  
-      // Almacena los datos del usuario en AsyncStorage
+
       await AsyncStorage.setItem('userId', id);
       await AsyncStorage.setItem('userRole', role);
-  
-  if (role === 'Administrador') {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Almacen' }],
-      });
-    } else {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
-    }
-  
-      // Muestra un mensaje de bienvenida
-      Alert.alert('Bienvenido', `Hola, ${name}`);
+
+      setMessage({ text: `Bienvenido, ${name}`, type: 'success' });
+      setModalVisible(true);
+
+      // Guarda la intención de navegación sin ejecutarla aún
+      setShouldNavigate(true);
     } catch (error) {
       if (error instanceof Error) {
-        Alert.alert('Error', error.message); // Usa el mensaje del error
+        setMessage({ text: error.message, type: 'error' });
       } else {
-        Alert.alert('Error', 'Ocurrió un error desconocido.');
+        setMessage({ text: 'Ocurrió un error desconocido.', type: 'error' });
       }
     }
   };
-  
-  
+
+  const closeModal = () => {
+    setModalVisible(false);
+
+    // Ejecuta la navegación pendiente después de cerrar el modal
+    if (shouldNavigate) {
+      const storedUserRole = AsyncStorage.getItem('userRole').then((role) => {
+        if (role === 'Administrador') {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Almacen' }],
+          });
+        } else {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          });
+        }
+      });
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -160,10 +165,14 @@ const Login = () => {
           }
           style={styles.input}
         />
-<Button mode="contained" onPress={handleLogin} style={styles.button}>
-  Iniciar Sesión
-</Button>
 
+        {message && message.type === 'error' && (
+          <Text style={styles.errorMessage}>{message.text}</Text>
+        )}
+
+        <Button mode="contained" onPress={handleLogin} style={styles.button}>
+          Iniciar Sesión
+        </Button>
 
         <Text style={styles.registerText}>
           ¿No tienes cuenta?{' '}
@@ -183,9 +192,27 @@ const Login = () => {
           </Svg>
         </View>
       )}
+
+      {/* Modal para mensajes */}
+      <Modal
+        transparent
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>{message?.text}</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={closeModal}>
+              <Text style={styles.modalButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -233,7 +260,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '100%',
     backgroundColor: '#272C73',
-    borderRadius: 4, // Cambia a un redondeo más leve
+    borderRadius: 4,
   },
   registerText: {
     marginTop: 15,
@@ -244,6 +271,48 @@ const styles = StyleSheet.create({
     color: '#272C73',
     fontWeight: 'bold',
   },
+  errorMessage: {
+    color: '#FF0000',
+    marginTop:10,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#272C73',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButton: {
+    backgroundColor: '#272C73',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default Login;
+ 

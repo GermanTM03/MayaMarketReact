@@ -3,6 +3,7 @@ export interface Product {
     _id: string;
     userId: string;
     name: string;
+    categories: string;
     image_1: string;
     image_2: string;
     image_3: string;

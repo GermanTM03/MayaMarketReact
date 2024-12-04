@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   topbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#007BFF',
+    backgroundColor: '#272C73',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomLeftRadius: 12,

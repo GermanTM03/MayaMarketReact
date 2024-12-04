@@ -14,6 +14,7 @@ type RootStackParamList = {
   Register: undefined;
   Almacen: undefined;
 };
+
 interface FloatingMenuProps {
   onSelectOption: (option: string) => void;
   onSearchUpdate: (data: string) => void; // Nueva prop para actualizar el buscador
@@ -29,11 +30,7 @@ type IoniconName =
   | 'log-out-outline'
   | 'qr-code-outline';
 
-interface FloatingMenuProps {
-  onSelectOption: (option: string) => void;
-}
-
-const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption,onSearchUpdate  }) => {
+const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption, onSearchUpdate }) => {
   const [isVisible, setIsVisible] = useState(false); // Controla la visibilidad del menú
   const [isModalVisible, setIsModalVisible] = useState(false); // Controla la visibilidad del modal
   const navigation = useNavigation<NavigationProp>(); // Especifica el tipo de navegación
@@ -58,7 +55,7 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption,onSearchUpda
 
   return (
     <View style={styles.container}>
-      {/* Botón flotante para mostrar/ocultar el menú */}
+      {/* Botón flotante */}
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={() => setIsVisible((prev) => !prev)}
@@ -78,13 +75,13 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption,onSearchUpda
                 if (option.label === 'Cerrar sesión') {
                   handleLogout();
                 } else if (option.label === 'Lector QR') {
-                  setIsModalVisible(true); // Abre el modal
+                  setIsModalVisible(true);
                 } else {
                   onSelectOption(option.label.toLowerCase());
                 }
               }}
             >
-              <Ionicons name={option.icon} size={24} color="#007BFF" style={styles.icon} />
+              <Ionicons name={option.icon} size={24} color="#333333" style={styles.icon} />
               <Text style={styles.menuItemText}>{option.label}</Text>
             </TouchableOpacity>
           ))}
@@ -93,20 +90,18 @@ const FloatingMenu: React.FC<FloatingMenuProps> = ({ onSelectOption,onSearchUpda
 
       {/* Modal del lector QR */}
       <Modal
-  visible={isModalVisible}
-  animationType="slide"
-  onRequestClose={() => setIsModalVisible(false)} // Cierra el modal al tocar fuera
->
-<QRScanner
-  onScanComplete={(data) => {
-    onSearchUpdate(data); // Actualiza el buscador mediante la prop
-    setIsModalVisible(false); // Cierra el lector QR
-  }}
-  onClose={() => setIsModalVisible(false)} // También cierra si se pulsa cancelar
-/>
-
-</Modal>
-
+        visible={isModalVisible}
+        animationType="slide"
+        onRequestClose={() => setIsModalVisible(false)} // Cierra el modal al tocar fuera
+      >
+        <QRScanner
+          onScanComplete={(data) => {
+            onSearchUpdate(data); // Actualiza el buscador mediante la prop
+            setIsModalVisible(false); // Cierra el lector QR
+          }}
+          onClose={() => setIsModalVisible(false)} // También cierra si se pulsa cancelar
+        />
+      </Modal>
     </View>
   );
 };
@@ -116,38 +111,51 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
+    alignItems: 'center', // Centrar el menú con respecto al botón
   },
   floatingButton: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#007BFF',
+    backgroundColor: '#282948',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
+    zIndex: 10, // Asegura que el botón esté encima
   },
   menu: {
+    position: 'absolute', // Posiciona el menú relativo al botón flotante
+    bottom: 80, // Aparece sobre el botón
+    right: 0,
     backgroundColor: '#FFF',
     borderRadius: 12,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    marginTop: 10,
     elevation: 5,
+    zIndex: 5, // Asegura que el menú esté debajo del botón
+    width: 200, // Define un ancho consistente para evitar cortes
   },
   menuItem: {
-    flexDirection: 'row',
+    flexDirection: 'row', // Coloca el texto y el ícono en fila
     alignItems: 'center',
-    paddingVertical: 12,
+    justifyContent: 'space-between', // Separa el texto e ícono a los extremos
+    paddingVertical: 10,
+    paddingHorizontal: 10, // Aumenta el espacio interior
     borderBottomWidth: 1,
     borderBottomColor: '#EEE',
   },
   icon: {
-    marginRight: 12,
+    marginLeft: 12, // Espacio entre el texto y el ícono
+    color: '#333', // Asegura que el color sea consistente
   },
   menuItemText: {
     fontSize: 16,
     color: '#333',
+    marginLeft: 12, // Espacio entre el ícono y el texto
+    flex: 1, // Permite que el texto ocupe el espacio restante
+    flexShrink: 1, // Evita que el texto se corte si es muy largo
   },
+
 });
 
 export default FloatingMenu;

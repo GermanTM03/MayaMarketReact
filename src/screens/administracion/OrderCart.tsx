@@ -72,7 +72,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onUpdate }) => {
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     elevation: 3,
     backgroundColor: '#FFFFFF',
     padding: 8,
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#272C73',
+    color: '#1E3A8A', // Azul oscuro
   },
   statusContainer: {
     borderRadius: 16,
@@ -102,15 +102,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#FFF',
+    
   },
   pendiente: {
     backgroundColor: '#FFC107', // Amarillo
   },
   almacenado: {
-    backgroundColor: '#4CAF50', // Verde
+    backgroundColor: '#2196F3', // Verde
   },
   completado: {
-    backgroundColor: '#2196F3', // Azul
+    backgroundColor: '#4CAF50', // Azul
   },
   statusDefault: {
     backgroundColor: '#E0E0E0', // Gris
@@ -127,11 +128,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#757575',
+    color: '#374151', // Gris oscuro
   },
   value: {
     fontSize: 14,
-    color: '#424242',
+    color: '#1F2937', // Negro suave
+    
   },
 });
 

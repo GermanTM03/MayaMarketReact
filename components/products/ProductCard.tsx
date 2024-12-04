@@ -19,7 +19,7 @@ const ProductCard = ({
         {/* Información del producto */}
         <View style={styles.info}>
           <Title style={styles.name}>{item.name}</Title>
-          <Paragraph style={styles.stock}>Cantidad disponible: {item.stock}</Paragraph>
+          <Paragraph style={styles.stock}>Por Unidad: {item.quantity} {item.size}</Paragraph>
           <Paragraph style={styles.price}>$ {item.price.toFixed(2)}</Paragraph>
           {/* Información de entrega con ícono */}
           <View style={styles.deliveryContainer}>

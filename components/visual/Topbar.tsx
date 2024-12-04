@@ -4,10 +4,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 interface TopBarProps {
   onSearch: (query: string) => void;
-  navigateToHome: () => void;
+  navigateToBusqueda: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onSearch, navigateToHome }) => {
+const TopBar: React.FC<TopBarProps> = ({ onSearch, navigateToBusqueda }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSearch = (text: string) => {

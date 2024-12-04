@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
-  Alert,
   ScrollView,
   Image,
   TouchableOpacity,
   Modal,
+  KeyboardAvoidingView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -14,9 +14,9 @@ import { Text, TextInput, Button, Card, Divider, Chip, IconButton } from 'react-
 import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 
 const VenderScreen = () => {
-  
   const [userId, setUserId] = useState('');
   const [name, setName] = useState('');
+  const [categories, setCategories] = useState('');
   const [stock, setStock] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -24,10 +24,12 @@ const VenderScreen = () => {
   const [status, setStatus] = useState('available');
   const [images, setImages] = useState<string[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
 
-  const sizeOptions = ['ML', 'Tallas', 'Kg', 'Cm'];
+  const sizeOptions = ['ML', 'C/U', 'Tallas', 'Kg', 'Cm'];
+  const categoriesOptions = ['Ropa', 'Electrónica', 'Hogar', 'Juguetes', 'Deportes', 'Perfumes', 'Otros'];
 
   useEffect(() => {
     const loadUserId = async () => {
@@ -36,11 +38,10 @@ const VenderScreen = () => {
         if (storedUserId) {
           setUserId(storedUserId);
         } else {
-          Alert.alert('Error', 'No se encontró el ID del usuario.');
+          console.error('No se encontró el ID del usuario.');
         }
       } catch (error) {
         console.error('Error al obtener el ID de usuario:', error);
-        Alert.alert('Error', 'Hubo un problema al cargar el ID del usuario.');
       }
     };
 
@@ -56,8 +57,7 @@ const VenderScreen = () => {
 
     if (!result.canceled && result.assets[0]?.uri) {
       if (images.length >= 3) {
-        Alert.alert('Error', 'Solo puedes seleccionar 3 imágenes.');
-        return;
+        return alert('Solo puedes seleccionar 3 imágenes.');
       }
       setImages([...images, result.assets[0].uri]);
     }
@@ -77,6 +77,7 @@ const VenderScreen = () => {
       setScale(1); // Restablece el zoom al soltar
     }
   };
+
   const openImageModal = (imageUri: string) => {
     setSelectedImage(imageUri);
     setModalVisible(true);
@@ -86,15 +87,28 @@ const VenderScreen = () => {
     setModalVisible(false);
     setSelectedImage(null);
   };
-  const handleSubmit = async () => {
+
+  const validateForm = () => {
+    if (!name || !categories || !stock || !price || !quantity || !size) {
+      alert('Por favor, llena todos los campos obligatorios.');
+      return false;
+    }
     if (images.length < 3) {
-      Alert.alert('Error', 'Por favor, selecciona exactamente 3 imágenes.');
+      alert('Selecciona exactamente 3 imágenes.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) {
       return;
     }
 
     const data = new FormData();
     data.append('userId', userId);
     data.append('name', name);
+    data.append('categories', categories);
     data.append('stock', stock);
     data.append('price', price);
     data.append('quantity', quantity);
@@ -119,192 +133,164 @@ const VenderScreen = () => {
       });
 
       if (response.status === 201) {
-        const result = await response.json();
-        Alert.alert('Éxito', 'Producto creado exitosamente.');
+        resetForm();
+        setSuccessModalVisible(true);
       } else {
-        Alert.alert('Error', 'No se pudo crear el producto.');
+        alert('No se pudo crear el producto.');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'Hubo un problema con el servidor.');
+      alert('Hubo un problema con el servidor.');
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setCategories('');
+    setStock('');
+    setPrice('');
+    setQuantity('');
+    setSize('');
+    setImages([]);
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Title title="Crear Producto" />
-        <Card.Content>
-          <TextInput
-            label="Nombre del producto"
-            value={name}
-            onChangeText={setName}
-            mode="outlined"
-            style={styles.input}
-          />
-          <TextInput
-            label="Stock"
-            value={stock}
-            onChangeText={setStock}
-            mode="outlined"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <TextInput
-            label="Precio"
-            value={price}
-            onChangeText={setPrice}
-            mode="outlined"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <TextInput
-            label="Cantidad por paquete"
-            value={quantity}
-            onChangeText={setQuantity}
-            mode="outlined"
-            keyboardType="numeric"
-            style={styles.input}
-          />
+    <KeyboardAvoidingView behavior="padding" style={styles.container}>
+      <ScrollView>
+        <Card style={styles.card}>
+          <Card.Title title="Crear Producto" />
+          <Card.Content>
+            <TextInput
+              label="Nombre del producto"
+              value={name}
+              onChangeText={setName}
+              mode="outlined"
+              style={styles.input}
+            />
+            <Divider style={styles.divider} />
+            <TextInput
+  label="Stock"
+  value={stock}
+  onChangeText={(value) => setStock(value.replace(/[^0-9]/g, ''))}  // Permite solo números
+  mode="outlined"
+  keyboardType="numeric"  // Teclado numérico
+  style={styles.input}
+/>
 
-          <Text style={styles.subtitle}>Tamaño:</Text>
-          <View style={styles.chipContainer}>
-            {sizeOptions.map((option) => (
-              <Chip
-                key={option}
-                selected={size === option}
-                onPress={() => setSize(option)}
-                style={[styles.chip, size === option && styles.selectedChip]}
-              >
-                {option}
-              </Chip>
-            ))}
-          </View>
+     <TextInput
+  label="Precio"
+  value={price}
+  onChangeText={(value) => setPrice(value.replace(/[^0-9.]/g, ''))}  // Permite solo números y punto
+  mode="outlined"
+  keyboardType="numeric"  // Teclado numérico
+  style={styles.input}
+/>
+     <TextInput
+  label="Cantidad por paquete"
+  value={quantity}
+  onChangeText={(value) => setQuantity(value.replace(/[^0-9]/g, ''))}  // Permite solo números
+  mode="outlined"
+  keyboardType="numeric"  // Teclado numérico
+  style={styles.input}
+/>
+            <Text style={styles.subtitle}>Tamaño:</Text>
+            <View style={styles.chipContainer}>
+              {sizeOptions.map((option) => (
+                <Chip
+                  key={option}
+                  selected={size === option}
+                  onPress={() => setSize(option)}
+                  style={[styles.chip, size === option && styles.selectedChip]}
+                >
+                  {option}
+                </Chip>
+              ))}
+            </View>
+            <Divider style={styles.divider} />
+            <Text style={styles.subtitle}>Categoria:</Text>
+            <View style={styles.chipContainer}>
+              {categoriesOptions.map((option) => (
+                <Chip
+                  key={option}
+                  selected={categories === option}
+                  onPress={() => setCategories(option)}
+                  style={[styles.chip, categories === option && styles.selectedChip]}
+                >
+                  {option}
+                </Chip>
+              ))}
+            </View>
+            <Text style={styles.subtitle}>Imágenes seleccionadas:</Text>
+            <View style={styles.imageContainer}>
+              {images.map((img, idx) => (
+                <View key={idx} style={styles.imageWrapper}>
+                  <TouchableOpacity onPress={() => openImageModal(img)}>
+                    <Image source={{ uri: img }} style={styles.imagePreview} />
+                  </TouchableOpacity>
+                  <IconButton
+                    icon="close"
+                    size={20}
+                    onPress={() => removeImage(idx)}
+                    style={styles.deleteButton}
+                  />
+                </View>
+              ))}
+            </View>
+            <Button mode="contained" onPress={selectImage} style={styles.button}>
+              Seleccionar Imagen
+            </Button>
+          </Card.Content>
+          <Card.Actions>
+            <Button mode="contained" onPress={handleSubmit} style={styles.submitButton}>
+              Crear Producto
+            </Button>
+          </Card.Actions>
+        </Card>
+      </ScrollView>
 
-          <Divider style={styles.divider} />
-
-          <Text style={styles.subtitle}>Imágenes seleccionadas:</Text>
-          <View style={styles.imageContainer}>
-            {images.map((img, idx) => (
-              <View key={idx} style={styles.imageWrapper}>
-                      <TouchableOpacity onPress={() => openImageModal(img)}>
-
-                <Image source={{ uri: img }} style={styles.imagePreview} />
-                </TouchableOpacity>
-
-                <IconButton
-                  icon="close"
-                  size={20}
-                  onPress={() => removeImage(idx)}
-                  style={styles.deleteButton}
-                />
-              </View>
-            ))}
-          </View>
-          <Button mode="contained" onPress={selectImage} style={styles.button}>
-            Seleccionar Imagen
-          </Button>
-        </Card.Content>
-        <Card.Actions>
-          <Button mode="contained" onPress={handleSubmit} style={styles.submitButton}>
-            Crear Producto
-          </Button>
-        </Card.Actions>
-      </Card>
-
- {/* Modal de visualización de imágenes */}
- {selectedImage && (
-        <Modal visible={modalVisible} transparent={true} animationType="slide">
-          <View style={styles.modalContainer}>
-            <PinchGestureHandler
-              onGestureEvent={handleZoomEvent}
-              onHandlerStateChange={handleZoomStateChange}
-            >
-              <Image
-                source={{ uri: selectedImage }}
-                style={[styles.modalImage, { transform: [{ scale }] }]}
-                resizeMode="contain"
-              />
-            </PinchGestureHandler>
-            <Button mode="contained" onPress={closeImageModal} style={styles.closeButton}>
+      {/* Modal de éxito */}
+      <Modal visible={successModalVisible} transparent animationType="fade">
+        <View style={styles.successModal}>
+          <View style={styles.successModalContent}>
+            <Text style={styles.successText}>¡Producto creado exitosamente!</Text>
+            <Button mode="contained" onPress={() => setSuccessModalVisible(false)} style={styles.button}>
               Cerrar
             </Button>
           </View>
-        </Modal>
- )}
-    </ScrollView>
+        </View>
+      </Modal>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-  },
-  modalImage: { width: '90%', height: '70%' },
-  closeButton: { marginTop: 20 },
-
-  card: {
-    margin: 8,
+  container: { flex: 1, backgroundColor: '#F5F5F5', padding: 16 },
+  card: { margin: 8, borderRadius: 8, elevation: 3 },
+  input: { marginBottom: 12 },
+  divider: { marginVertical: 16 },
+  subtitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 8 },
+  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
+  chip: { margin: 4, borderRadius: 4 },
+  selectedChip: { backgroundColor: '#6200ee' },
+  imageContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  imageWrapper: { position: 'relative', margin: 8 },
+  imagePreview: { width: 100, height: 100, borderRadius: 8 },
+  deleteButton: { position: 'absolute', top: -10, right: -10, backgroundColor: '#ff4d4d' },
+  button: { marginTop: 12, borderRadius: 4 },
+  submitButton: { backgroundColor: '#282948', marginHorizontal: 8, marginVertical: 12, borderRadius: 4 },
+  successModal: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  successModalContent: {
+    width: '80%',
+    backgroundColor: '#fff',
     borderRadius: 10,
-    elevation: 3,
-  },
-  input: {
-    marginBottom: 12,
-  },  modalContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
+    padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  divider: {
-    marginVertical: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 16,
-  },
-  chip: {
-    margin: 4,
-  },
-  selectedChip: {
-    backgroundColor: '#6200ee',
-  },
-  imageContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  imageWrapper: {
-    position: 'relative',
-    margin: 8,
-  },
-  imagePreview: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    backgroundColor: '#ff4d4d',
-  },
-  button: {
-    marginTop: 12,
-  },
-  submitButton: {
-    backgroundColor: '#282948',
-    marginHorizontal: 8,
-    marginVertical: 12,
-  },
+  successText: { fontSize: 18, fontWeight: 'bold', color: '#333', marginBottom: 20 },
 });
 
 export default VenderScreen;

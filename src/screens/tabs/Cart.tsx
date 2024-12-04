@@ -5,7 +5,7 @@ import { useCartViewModel } from '../../viewmodels/CartViewModel';
 import TopBar from '../../../components/visual/AnimacionTopBar'; // Asegúrate de usar la ruta correcta
 import PaymentComponent from '../../../components/PaymentComponent'; // Importa el componente PaymentComponent
 
-const Cart = forwardRef((_, ref) => {
+const Cart = forwardRef(({ navigation }: { navigation: any }, ref) => {
   const { cart, loading, error, loadCart, removeItemFromCart, changeItemQuantity, clearCart } = useCartViewModel();
   const [showPaymentModal, setShowPaymentModal] = useState(false); // Estado para el modal de pago
 
